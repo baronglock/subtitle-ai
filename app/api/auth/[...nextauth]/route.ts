@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
-import { getUserByEmail } from "../../../lib/userStore";
+import { getUserByEmail, findOrCreateOAuthUser } from "../../../lib/userStore";
 
 const handler = NextAuth({
   providers: [
@@ -27,7 +27,7 @@ const handler = NextAuth({
         }
 
         // Find user in our store
-        const user = getUserByEmail(credentials.email);
+        const user = await getUserByEmail(credentials.email);
         
         if (!user) {
           // User doesn't exist - they need to sign up first
@@ -57,11 +57,40 @@ const handler = NextAuth({
     error: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      // Handle OAuth sign-ins
+      if (account?.provider === "google" || account?.provider === "github") {
+        if (profile?.email) {
+          const dbUser = await findOrCreateOAuthUser({
+            email: profile.email,
+            name: profile.name || profile.email.split('@')[0],
+            provider: account.provider,
+          });
+          
+          // Attach plan info to user object
+          (user as any).plan = dbUser.plan;
+          (user as any).id = dbUser.id;
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.plan = (user as any).plan || "free";
       }
+      
+      // For OAuth, fetch user data from database
+      if (account?.provider === "google" || account?.provider === "github") {
+        if (token.email) {
+          const dbUser = await getUserByEmail(token.email as string);
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.plan = dbUser.plan;
+          }
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {
