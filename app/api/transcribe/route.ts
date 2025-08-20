@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "fileName é obrigatório" }, { status: 400 });
     }
 
-    // Chama o RunPod serverless endpoint
+    // Chama o RunPod serverless endpoint with user plan
     const runpodResponse = await fetch(
       `https://api.runpod.ai/v2/${RUNPOD_ENDPOINT_ID}/runsync`,
       {
@@ -117,6 +117,7 @@ export async function POST(request: Request) {
             bucketName: process.env.R2_BUCKET_NAME!,
             fileName: fileName,
             targetLanguage: targetLanguage || null,
+            userPlan: userPlan,  // Send user plan to select model quality
           },
         }),
       }
