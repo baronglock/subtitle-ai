@@ -28,8 +28,8 @@ export async function POST(request: Request) {
       revisionLanguage
     } = await request.json();
     
-    const headersList = headers();
-    const country = detectUserCountry(headersList);
+    const headersList = await headers();
+    const country = detectUserCountry(headersList as any as Headers);
     const userId = (session.user as any).id;
     const email = session.user.email!;
     

@@ -5,9 +5,16 @@ export type TranslationProvider = "gpt5-mini" | "google" | "libre" | "mymemory";
 export type PlanType = "free" | "starter" | "pro" | "enterprise";
 
 // Initialize OpenAI for GPT-5-mini (paid plans)
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
-});
+let openai: OpenAI | null = null;
+
+function getOpenAI() {
+  if (!openai && process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 // Translation quality by plan
 const TRANSLATION_CONFIG = {
@@ -48,6 +55,11 @@ async function translateWithGPT5Mini(
   sourceLang?: string,
   context?: string
 ): Promise<string> {
+  const client = getOpenAI();
+  if (!client) {
+    throw new Error("OpenAI API key not configured");
+  }
+  
   try {
     const systemPrompt = `You are a professional translator. Translate the following text from ${
       sourceLang || "auto-detected language"
@@ -55,7 +67,7 @@ async function translateWithGPT5Mini(
       context ? `Context: ${context}` : ""
     }`;
 
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: "gpt-5-mini", // Using GPT-5-mini as requested
       messages: [
         { role: "system", content: systemPrompt },

@@ -1,12 +1,15 @@
 import Stripe from "stripe";
 import { PRICING_PLANS, CREDIT_PACKAGES, formatPrice } from "./pricing";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-12-18.acacia",
-});
+// Lazy initialization - only create when needed, not during build
+function getStripe(): Stripe {
+  return new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+    apiVersion: "2025-07-30.basil",
+  });
+}
 
 // Detect user's country from IP or browser
-export function detectUserCountry(headers: Headers): "BR" | "US" | "OTHER" {
+export function detectUserCountry(headers: any): "BR" | "US" | "OTHER" {
   const acceptLanguage = headers.get("accept-language") || "";
   const cfCountry = headers.get("cf-ipcountry") || "";
   
@@ -38,7 +41,7 @@ export async function createCheckoutSession(
     ? ["card", "boleto", "pix"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[]
     : ["card"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[];
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     payment_method_types: paymentMethods,
     mode: "subscription",
     customer_email: email,
@@ -104,7 +107,7 @@ export async function createCreditPayment(
     ? ["card", "boleto", "pix"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[]
     : ["card"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[];
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     payment_method_types: paymentMethods,
     mode: "payment",
     customer_email: email,
@@ -160,7 +163,7 @@ export async function createRevisionPayment(
     ? ["card", "boleto", "pix"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[]
     : ["card"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[];
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     payment_method_types: paymentMethods,
     mode: "payment",
     customer_email: email,
@@ -208,7 +211,7 @@ export async function handleStripeWebhook(
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
   
   try {
-    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    const event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
     
     switch (event.type) {
       case "checkout.session.completed": {
@@ -255,7 +258,7 @@ export async function createCustomerPortal(
   customerId: string,
   returnUrl: string
 ): Promise<string> {
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
   });

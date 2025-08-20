@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     }
     
     // Get client IP for security checks
-    const headersList = headers();
+    const headersList = await headers();
     const clientIP = await getClientIP();
     const userAgent = headersList.get("user-agent") || "";
     

@@ -3,7 +3,7 @@ import crypto from "crypto";
 
 // IP tracking and rate limiting
 export async function getClientIP(): Promise<string> {
-  const headersList = headers();
+  const headersList = await headers();
   const forwardedFor = headersList.get("x-forwarded-for");
   const realIP = headersList.get("x-real-ip");
   
