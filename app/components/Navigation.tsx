@@ -5,17 +5,20 @@ import { usePathname } from "next/navigation";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useI18n } from "../i18n/provider";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navigation() {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
   const links = [
-    { href: "/", label: "Home" },
-    { href: "/transcribe", label: "Transcribe" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/", label: t("nav.home") },
+    { href: "/transcribe", label: t("nav.transcribe") },
+    { href: "/pricing", label: t("nav.pricing") },
+    { href: "/dashboard", label: t("nav.dashboard") },
   ];
 
   const isActive = (href: string) => pathname === href;
@@ -47,6 +50,8 @@ export default function Navigation() {
               </Link>
             ))}
             
+            <LanguageSwitcher />
+            
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -63,7 +68,7 @@ export default function Navigation() {
               href="/login"
               className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-shadow"
             >
-              Sign In
+              {t("nav.signIn")}
             </Link>
           </div>
 

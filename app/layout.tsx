@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { I18nProvider } from "./i18n/provider";
 import Navigation from "./components/Navigation";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -17,14 +18,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="pt-BR" className="dark">
       <body className={`${inter.className} antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white`}>
-        <ThemeProvider>
-          <Navigation />
-          <main className="pt-16">
-            {children}
-          </main>
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <Navigation />
+            <main className="pt-16">
+              {children}
+            </main>
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );
