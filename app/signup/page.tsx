@@ -12,14 +12,36 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       alert("Passwords don't match!");
       return;
     }
-    // Handle signup logic here
-    console.log("Signup:", { name, email, password, agreeToTerms });
+    
+    try {
+      // First create account by logging in (will auto-create in our simple auth)
+      const response = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          csrfToken: "",
+        }),
+      });
+
+      if (response.ok) {
+        // Redirect to dashboard on success
+        window.location.href = "/dashboard";
+      } else {
+        alert("Failed to create account. Please try again.");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("An error occurred during signup");
+    }
   };
 
   return (
