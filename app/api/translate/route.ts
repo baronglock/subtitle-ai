@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 }
 
 // Function to translate SRT content
-export async function translateSRT(
+async function translateSRT(
   srtContent: string,
   targetLanguage: string,
   sourceLanguage?: string

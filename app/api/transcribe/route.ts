@@ -2,10 +2,47 @@
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { translateSRT } from "../translate/route";
 
 const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY!;
 const RUNPOD_ENDPOINT_ID = process.env.RUNPOD_ENDPOINT_ID!;
+
+// Helper function to translate SRT content
+async function translateSRT(
+  srtContent: string,
+  targetLanguage: string,
+  sourceLanguage?: string
+): Promise<string> {
+  const lines = srtContent.split("\n");
+  const translatedLines: string[] = [];
+  
+  for (const line of lines) {
+    // Check if line is subtitle text (not number or timestamp)
+    if (line && !line.match(/^\d+$/) && !line.includes("-->")) {
+      try {
+        const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${
+          sourceLanguage || "auto"
+        }&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(line)}`;
+        
+        const response = await fetch(translateUrl);
+        const data = await response.json();
+        
+        const translatedText = data[0]
+          .map((item: any) => item[0])
+          .filter((item: any) => item)
+          .join("");
+        
+        translatedLines.push(translatedText);
+      } catch (error) {
+        // If translation fails, keep original text
+        translatedLines.push(line);
+      }
+    } else {
+      translatedLines.push(line);
+    }
+  }
+  
+  return translatedLines.join("\n");
+}
 
 export async function POST(request: Request) {
   try {
