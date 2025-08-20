@@ -20,23 +20,29 @@ export default function SignupPage() {
     }
     
     try {
-      // First create account by logging in (will auto-create in our simple auth)
-      const response = await fetch("/api/auth/callback/credentials", {
+      // Create account via API
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
           password,
           name,
-          csrfToken: "",
         }),
       });
 
       if (response.ok) {
-        // Redirect to dashboard on success
+        // Auto-login after signup
+        const { signIn } = await import("next-auth/react");
+        await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
         window.location.href = "/dashboard";
       } else {
-        alert("Failed to create account. Please try again.");
+        const data = await response.json();
+        alert(data.error || "Failed to create account. Please try again.");
       }
     } catch (error) {
       console.error("Signup error:", error);

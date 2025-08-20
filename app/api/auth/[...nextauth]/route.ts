@@ -3,9 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
-
-// Simple in-memory store for demo - replace with database in production
-const users: any[] = [];
+import { getUserByEmail } from "../../../lib/userStore";
 
 const handler = NextAuth({
   providers: [
@@ -28,28 +26,12 @@ const handler = NextAuth({
           return null;
         }
 
-        // Find user in our simple store
-        const user = users.find(u => u.email === credentials.email);
+        // Find user in our store
+        const user = getUserByEmail(credentials.email);
         
         if (!user) {
-          // For demo, create user on first login
-          const hashedPassword = await bcrypt.hash(credentials.password, 10);
-          const newUser = {
-            id: String(users.length + 1),
-            email: credentials.email,
-            name: credentials.email.split("@")[0],
-            password: hashedPassword,
-            plan: "free",
-            minutesUsed: 0,
-            minutesLimit: 30
-          };
-          users.push(newUser);
-          return {
-            id: newUser.id,
-            email: newUser.email,
-            name: newUser.name,
-            plan: newUser.plan
-          };
+          // User doesn't exist - they need to sign up first
+          return null;
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);

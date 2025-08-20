@@ -14,21 +14,19 @@ export default function LoginPage() {
     e.preventDefault();
     
     try {
-      const response = await fetch("/api/auth/callback/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          csrfToken: "", // NextAuth will handle this
-        }),
+      // Using NextAuth signIn
+      const { signIn } = await import("next-auth/react");
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      if (response.ok) {
+      if (result?.ok) {
         // Redirect to dashboard on success
         window.location.href = "/dashboard";
       } else {
-        alert("Invalid email or password");
+        alert("Invalid email or password. New users: please sign up first!");
       }
     } catch (error) {
       console.error("Login error:", error);
