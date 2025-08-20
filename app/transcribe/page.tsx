@@ -34,11 +34,16 @@ export default function TranscribePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [transcription, setTranscription] = useState("");
   const [srtContent, setSrtContent] = useState("");
+  const [translatedSrtContent, setTranslatedSrtContent] = useState("");
   const [detectedLanguage, setDetectedLanguage] = useState("");
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [translationStatus, setTranslationStatus] = useState<"idle" | "translating" | "completed" | "error">("idle");
+  const [selectedTranslationLang, setSelectedTranslationLang] = useState("");
+  const [showSrtPreview, setShowSrtPreview] = useState(false);
+  const [previewContent, setPreviewContent] = useState("");
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -124,13 +129,35 @@ export default function TranscribePage() {
 
       const result = await transcribeResponse.json();
       
+      console.log("API Response:", result);
+      
       setProgress(100);
       setStatus("completed");
       setStatusMessage("Transcription completed successfully!");
-      setTranscription(result.transcription);
-      setSrtContent(result.srt);
-      setDetectedLanguage(result.detected_language);
-      setDuration(result.duration);
+      
+      // Handle the response structure properly
+      if (result.transcription) {
+        setTranscription(result.transcription);
+      } else if (result.text) {
+        setTranscription(result.text);
+      }
+      
+      if (result.srt) {
+        setSrtContent(result.srt);
+        if (targetLanguage && result.translated) {
+          setTranslatedSrtContent(result.srt);
+        }
+      }
+      
+      if (result.detected_language) {
+        setDetectedLanguage(result.detected_language);
+      } else if (result.language) {
+        setDetectedLanguage(result.language);
+      }
+      
+      if (result.duration) {
+        setDuration(result.duration);
+      }
 
     } catch (error) {
       setStatus("error");
@@ -139,14 +166,16 @@ export default function TranscribePage() {
     }
   };
 
-  const downloadSRT = () => {
-    if (!srtContent) return;
+  const downloadSRT = (content?: string, suffix?: string) => {
+    const srtToDownload = content || srtContent;
+    if (!srtToDownload) return;
     
-    const blob = new Blob([srtContent], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([srtToDownload], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${file?.name?.replace(/\.[^/.]+$/, "") || "subtitle"}.srt`;
+    const baseName = file?.name?.replace(/\.[^/.]+$/, "") || "subtitle";
+    a.download = `${baseName}${suffix || ""}.srt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -173,12 +202,58 @@ export default function TranscribePage() {
     setStatusMessage("");
     setTranscription("");
     setSrtContent("");
+    setTranslatedSrtContent("");
     setDetectedLanguage("");
     setDuration(0);
     setProgress(0);
+    setTranslationStatus("idle");
+    setSelectedTranslationLang("");
+    setShowSrtPreview(false);
+    setPreviewContent("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const translateContent = async () => {
+    if (!srtContent || !selectedTranslationLang) {
+      alert("Please select a language for translation");
+      return;
+    }
+
+    setTranslationStatus("translating");
+    setStatusMessage("Translating subtitles...");
+
+    try {
+      const response = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: srtContent,
+          targetLanguage: selectedTranslationLang,
+          sourceLanguage: detectedLanguage || sourceLanguage,
+          format: "srt"
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Translation failed");
+      }
+
+      const result = await response.json();
+      setTranslatedSrtContent(result.translatedText || result.srt);
+      setTranslationStatus("completed");
+      setStatusMessage("Translation completed!");
+    } catch (error) {
+      setTranslationStatus("error");
+      setStatusMessage("Translation failed. Please try again.");
+      console.error("Translation error:", error);
+    }
+  };
+
+  const previewSrt = (content: string, title: string) => {
+    setPreviewContent(content);
+    setShowSrtPreview(true);
   };
 
   return (
@@ -337,39 +412,195 @@ export default function TranscribePage() {
         )}
 
         {/* Results */}
-        {status === "completed" && transcription && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Transcription Result</h3>
-            
-            <div className="mb-6">
-              <textarea
-                readOnly
-                value={transcription}
-                className="w-full h-48 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 resize-none"
-              />
+        {status === "completed" && (transcription || srtContent) && (
+          <>
+            {/* Original Transcription */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Original Transcription</h3>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">Transcribed Text:</label>
+                <textarea
+                  readOnly
+                  value={transcription || "No text transcription available"}
+                  className="w-full h-32 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 resize-none"
+                />
+              </div>
+
+              {srtContent && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">SRT Subtitles Preview:</label>
+                  <textarea
+                    readOnly
+                    value={srtContent.split('\n').slice(0, 12).join('\n') + (srtContent.split('\n').length > 12 ? '\n\n...' : '')}
+                    className="w-full h-32 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 resize-none font-mono text-sm"
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => downloadSRT(srtContent, "_original")}
+                  disabled={!srtContent}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Original SRT
+                </button>
+                <button
+                  onClick={downloadTXT}
+                  disabled={!transcription}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Text
+                </button>
+                <button
+                  onClick={() => previewSrt(srtContent, "Original SRT")}
+                  disabled={!srtContent}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileAudio className="w-4 h-4" />
+                  View Full SRT
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={downloadSRT}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Download SRT
-              </button>
-              <button
-                onClick={downloadTXT}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Download TXT
-              </button>
+            {/* Translation Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Translate Subtitles</h3>
+              
+              {!translatedSrtContent ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Translate to:
+                    </label>
+                    <select
+                      value={selectedTranslationLang}
+                      onChange={(e) => setSelectedTranslationLang(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select language</option>
+                      {languages.filter(l => l.code !== "auto" && l.code !== detectedLanguage).map((lang) => (
+                        <option key={lang.code} value={lang.code}>
+                          {lang.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <button
+                    onClick={translateContent}
+                    disabled={!selectedTranslationLang || translationStatus === "translating"}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {translationStatus === "translating" ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Translating...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <Globe className="w-5 h-5" />
+                        Translate Subtitles
+                      </span>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p className="text-green-700 dark:text-green-300 font-medium">
+                      ✓ Successfully translated to {languages.find(l => l.code === selectedTranslationLang)?.name}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Translated SRT Preview:</label>
+                    <textarea
+                      readOnly
+                      value={translatedSrtContent.split('\n').slice(0, 12).join('\n') + (translatedSrtContent.split('\n').length > 12 ? '\n\n...' : '')}
+                      className="w-full h-32 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 resize-none font-mono text-sm"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => downloadSRT(translatedSrtContent, `_${selectedTranslationLang}`)}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Translated SRT
+                    </button>
+                    <button
+                      onClick={() => previewSrt(translatedSrtContent, "Translated SRT")}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                    >
+                      <FileAudio className="w-4 h-4" />
+                      View Full Translation
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTranslatedSrtContent("");
+                        setSelectedTranslationLang("");
+                        setTranslationStatus("idle");
+                      }}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    >
+                      Translate to Another Language
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* New Transcription Button */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
               <button
                 onClick={resetForm}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"
               >
-                New Transcription
+                Start New Transcription
               </button>
+            </div>
+          </>
+        )}
+
+        {/* SRT Preview Modal */}
+        {showSrtPreview && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-semibold">SRT File Preview</h3>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                <pre className="whitespace-pre-wrap font-mono text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                  {previewContent}
+                </pre>
+              </div>
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    const blob = new Blob([previewContent], { type: "text/plain;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "subtitle.srt";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  Download
+                </button>
+                <button
+                  onClick={() => setShowSrtPreview(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
