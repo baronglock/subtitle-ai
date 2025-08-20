@@ -1,103 +1,175 @@
-import Image from "next/image";
+// app/page.tsx
 
-export default function Home() {
+"use client"; // Obrigatório no Next.js para páginas com interatividade
+
+import { useState } from "react";
+
+export default function HomePage() {
+  // 'useState' é como a memória do componente.
+  // 'file' vai guardar o arquivo que o usuário escolher. Inicia como nulo (null).
+  // 'setFile' é a função que usamos para atualizar o valor de 'file'.
+  const [file, setFile] = useState<File | null>(null);
+  
+  // 'status' vai guardar a mensagem que mostramos para o usuário (ex: "Enviando...").
+  const [status, setStatus] = useState("Aguardando arquivo...");
+  
+  // 'transcription' vai guardar o texto final da transcrição.
+  const [transcription, setTranscription] = useState("");
+  
+  // 'srtContent' vai guardar o conteúdo SRT com timestamps
+  const [srtContent, setSrtContent] = useState("");
+  
+  // 'selectedLanguage' para futuras traduções
+  const [selectedLanguage, setSelectedLanguage] = useState("");
+
+  // Esta função será executada quando o formulário for enviado (clique no botão)
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+
+  if (!file) {
+    alert("Por favor, selecione um arquivo primeiro!");
+    return;
+  }
+
+  setStatus("1/4 - Preparando upload...");
+
+  try {
+    // 1. Pede a URL segura para o nosso backend
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, contentType: file.type }),
+    });
+
+    if (!response.ok) throw new Error("Falha ao obter URL de upload.");
+
+    const { url } = await response.json();
+    setStatus("2/4 - Enviando arquivo para o armazenamento...");
+
+    // 2. Envia o arquivo DIRETAMENTE para a URL segura da Cloudflare
+    const uploadResponse = await fetch(url, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type },
+    });
+
+    if (!uploadResponse.ok) throw new Error("Falha no upload para o R2.");
+
+    setStatus("3/4 - Arquivo enviado com sucesso! Iniciando transcrição...");
+
+    // 3. Chama a API do RunPod para transcrever
+    const transcribeResponse = await fetch('/api/transcribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        fileName: file.name,
+        targetLanguage: selectedLanguage || null
+      }),
+    });
+
+    if (!transcribeResponse.ok) {
+      const errorData = await transcribeResponse.json();
+      throw new Error(errorData.error || "Falha na transcrição.");
+    }
+
+    const transcriptionData = await transcribeResponse.json();
+    
+    setStatus("4/4 - Transcrição concluída com sucesso!");
+    setTranscription(transcriptionData.transcription);
+    setSrtContent(transcriptionData.srt);
+    
+    console.log("Idioma detectado:", transcriptionData.detected_language);
+    console.log("Duração:", transcriptionData.duration, "segundos");
+
+  } catch (error) {
+    console.error(error);
+    setStatus(`Erro: ${error instanceof Error ? error.message : String(error)}`);
+    alert("Ocorreu um erro. Veja o console para detalhes.");
+  }
+};
+
+  // Esta função é executada toda vez que o usuário seleciona um arquivo no <input>
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setFile(files[0]);
+      setStatus("Arquivo selecionado. Clique em 'Transcrever'.");
+    }
+  };
+
+  // Função para baixar o arquivo SRT
+  const downloadSRT = () => {
+    if (!srtContent) return;
+    
+    const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${file?.name?.replace(/\.[^/.]+$/, '') || 'subtitle'}.srt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-8">
+      <h1 className="text-4xl font-bold mb-4">SubtitleAI</h1>
+      <p className="mb-8 text-lg text-gray-400">Transcreva áudios e vídeos com IA</p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <form onSubmit={handleSubmit} className="w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-lg">
+        <div className="mb-6">
+          <label htmlFor="file-upload" className="block mb-2 text-sm font-medium text-gray-300">
+            Selecione seu arquivo de áudio ou vídeo
+          </label>
+          <input
+            id="file-upload"
+            name="file"
+            type="file"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          Transcrever Agora
+        </button>
+      </form>
+
+      <div className="w-full max-w-md mt-8">
+        <h2 className="text-xl font-semibold mb-2">Status:</h2>
+        <p className="text-gray-400 bg-gray-800 p-4 rounded-lg">{status}</p>
+      </div>
+      
+      {transcription && (
+        <>
+          <div className="w-full max-w-md mt-8">
+            <h2 className="text-xl font-semibold mb-2">Transcrição:</h2>
+            <textarea
+              readOnly
+              value={transcription}
+              className="w-full h-48 bg-gray-800 p-4 rounded-lg text-gray-300 resize-none"
+            />
+          </div>
+          
+          {srtContent && (
+            <div className="w-full max-w-md mt-6">
+              <button
+                onClick={downloadSRT}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Baixar Arquivo SRT
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </main>
   );
 }
