@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { kv } from "@vercel/kv";
+import { kv, isKVAvailable } from "./kv-client";
 
 // User interface
 interface User {
@@ -17,7 +17,8 @@ interface User {
 
 // For local development without KV, use in-memory storage
 let inMemoryUsers: User[] = [];
-const USE_KV = process.env.KV_REST_API_URL ? true : false;
+// Use the KV client availability flag
+const USE_KV = isKVAvailable;
 
 // Initialize with a test user for development
 async function initializeTestUser() {
@@ -32,7 +33,7 @@ async function initializeTestUser() {
     createdAt: new Date(),
   };
   
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       const existing = await kv.get(`user:test@example.com`);
       if (!existing) {
@@ -54,7 +55,7 @@ async function initializeTestUser() {
 initializeTestUser();
 
 export async function getAllUsers(): Promise<User[]> {
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       const emails = await kv.smembers("users:all");
       const users: User[] = [];
@@ -72,7 +73,7 @@ export async function getAllUsers(): Promise<User[]> {
 }
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       const user = await kv.get(`user:${email}`);
       return user as User | undefined;
@@ -85,7 +86,7 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 }
 
 export async function getUserById(id: string): Promise<User | undefined> {
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       // Get all users and find by ID (since we key by email)
       const emails = await kv.smembers("users:all");
@@ -122,7 +123,7 @@ export async function createUser(userData: {
     provider: userData.provider,
   };
   
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       await kv.set(`user:${userData.email}`, newUser);
       await kv.sadd("users:all", userData.email);
@@ -139,7 +140,7 @@ export async function createUser(userData: {
 }
 
 export async function updateUserPlan(userId: string, plan: User["plan"], minutesLimit: number): Promise<void> {
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       const emails = await kv.smembers("users:all");
       for (const email of emails) {
@@ -164,7 +165,7 @@ export async function updateUserPlan(userId: string, plan: User["plan"], minutes
 }
 
 export async function updateUserUsage(userId: string, minutesUsed: number): Promise<void> {
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       const emails = await kv.smembers("users:all");
       for (const email of emails) {
@@ -187,7 +188,7 @@ export async function updateUserUsage(userId: string, minutesUsed: number): Prom
 }
 
 export async function resetUserUsage(userId: string): Promise<void> {
-  if (USE_KV) {
+  if (USE_KV && kv) {
     try {
       const emails = await kv.smembers("users:all");
       for (const email of emails) {
