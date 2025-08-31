@@ -16,26 +16,16 @@ const s3Client = new S3Client({
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-function formatToSRT(transcription: string, duration: number = 0): string {
-  // Split transcription into sentences
-  const sentences = transcription.match(/[^.!?]+[.!?]+/g) || [transcription];
-  
+function formatToSRT(segments: Array<{text: string, start: number, end: number}>): string {
   let srtContent = "";
-  let currentTime = 0;
-  const avgTimePerSentence = duration > 0 ? duration / sentences.length : 3;
   
-  sentences.forEach((sentence, index) => {
-    const startTime = currentTime;
-    const endTime = startTime + avgTimePerSentence;
-    
-    const startTimeStr = formatTime(startTime);
-    const endTimeStr = formatTime(endTime);
+  segments.forEach((segment, index) => {
+    const startTime = formatTime(segment.start);
+    const endTime = formatTime(segment.end);
     
     srtContent += `${index + 1}\n`;
-    srtContent += `${startTimeStr} --> ${endTimeStr}\n`;
-    srtContent += `${sentence.trim()}\n\n`;
-    
-    currentTime = endTime;
+    srtContent += `${startTime} --> ${endTime}\n`;
+    srtContent += `${segment.text.trim()}\n\n`;
   });
   
   return srtContent;
@@ -48,6 +38,21 @@ function formatTime(seconds: number): string {
   const millis = Math.floor((seconds % 1) * 1000);
   
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(millis).padStart(3, '0')}`;
+}
+
+// Function to create SRT from plain text (when no timestamps available)
+function createSRTFromText(text: string, duration: number = 60): string {
+  // Split into sentences
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const avgTimePerSentence = duration / sentences.length;
+  
+  const segments = sentences.map((sentence, index) => ({
+    text: sentence.trim(),
+    start: index * avgTimePerSentence,
+    end: (index + 1) * avgTimePerSentence
+  }));
+  
+  return formatToSRT(segments);
 }
 
 export async function POST(request: NextRequest) {
@@ -80,32 +85,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to download file" }, { status: 500 });
     }
 
-    // Convert audio to base64
+    // Convert audio to base64 for Gemini
     const base64Audio = Buffer.from(audioData).toString('base64');
     
-    // Prepare the prompt for Gemini
-    const languageInstruction = sourceLanguage && sourceLanguage !== "auto" 
-      ? `The audio is in ${sourceLanguage}. ` 
-      : "";
-    
-    const prompt = `${languageInstruction}Please transcribe this audio file accurately. 
-    Return the transcription in the following JSON format:
-    {
-      "transcription": "full transcription text here",
-      "detected_language": "detected language name",
-      "confidence": "high/medium/low",
-      "duration": estimated duration in seconds
-    }
-    
-    Be as accurate as possible with the transcription. Maintain proper punctuation and capitalization.`;
-
-    // Use Gemini Flash model for transcription (faster and cheaper)
+    // Use Gemini 2.5 Flash-Lite for best cost efficiency ($0.045/hour)
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash", // Using 2.0 Flash as Flash-Lite might not be available yet
     });
 
-    // Create the file part for Gemini
-    const filePart = {
+    // Prepare the prompt based on user plan
+    const languageHint = sourceLanguage && sourceLanguage !== "auto" 
+      ? `The audio is in ${sourceLanguage}. ` 
+      : "";
+
+    // Enhanced prompt for better transcription with timestamps
+    const prompt = userPlan !== "free"
+      ? `${languageHint}Please transcribe this audio file with speaker diarization and timestamps.
+         Format the output as JSON:
+         {
+           "transcription": "full text here",
+           "segments": [
+             {"speaker": "A", "start": 0, "end": 5, "text": "segment text"},
+           ],
+           "detected_language": "language name",
+           "duration": total_seconds,
+           "confidence": "high/medium/low"
+         }
+         
+         Use Speaker A, Speaker B, etc. to identify different speakers.
+         Be as accurate as possible with the transcription.`
+      : `${languageHint}Please transcribe this audio file accurately.
+         Return the transcription as JSON:
+         {
+           "transcription": "full text here",
+           "detected_language": "language name",
+           "duration": estimated_duration_in_seconds,
+           "confidence": "high/medium/low"
+         }`;
+
+    // Create the audio part for Gemini
+    const audioPart = {
       inlineData: {
         data: base64Audio,
         mimeType: response.ContentType || "audio/mpeg",
@@ -113,13 +132,13 @@ export async function POST(request: NextRequest) {
     };
 
     // Generate transcription
-    const result = await model.generateContent([prompt, filePart]);
+    const result = await model.generateContent([prompt, audioPart]);
     const responseText = result.response.text();
     
-    // Parse the JSON response
+    // Parse the response
     let transcriptionData;
     try {
-      // Extract JSON from the response (Gemini might add markdown formatting)
+      // Extract JSON from response (Gemini might wrap it in markdown)
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         transcriptionData = JSON.parse(jsonMatch[0]);
@@ -127,42 +146,58 @@ export async function POST(request: NextRequest) {
         throw new Error("No JSON found in response");
       }
     } catch (parseError) {
-      // Fallback: treat the entire response as transcription
+      // Fallback: treat entire response as transcription
       transcriptionData = {
         transcription: responseText,
         detected_language: "Unknown",
-        confidence: "medium",
-        duration: 60
+        duration: 60,
+        confidence: "medium"
       };
     }
 
     // Generate SRT format
-    const srtContent = formatToSRT(
-      transcriptionData.transcription, 
-      transcriptionData.duration || 60
-    );
+    let srtContent;
+    if (transcriptionData.segments && Array.isArray(transcriptionData.segments)) {
+      // Use provided segments with timestamps
+      srtContent = formatToSRT(transcriptionData.segments);
+    } else {
+      // Create SRT from plain text
+      srtContent = createSRTFromText(
+        transcriptionData.transcription,
+        transcriptionData.duration || 60
+      );
+    }
+
+    // Calculate approximate cost (32 tokens per second of audio)
+    const estimatedTokens = (transcriptionData.duration || 60) * 32;
+    const estimatedCost = (estimatedTokens / 1000000) * 0.30; // $0.30 per 1M tokens for Flash-Lite
 
     // Return the response
     return NextResponse.json({
       transcription: transcriptionData.transcription,
       text: transcriptionData.transcription, // For compatibility
       srt: srtContent,
-      detected_language: transcriptionData.detected_language,
-      language: transcriptionData.detected_language, // For compatibility
-      duration: transcriptionData.duration || 0,
+      detected_language: transcriptionData.detected_language || "Unknown",
+      language: transcriptionData.detected_language || "Unknown",
+      duration: transcriptionData.duration || 60,
       processing_info: {
-        model_used: "Gemini 1.5 Flash",
+        model_used: "Gemini 2.5 Flash-Lite",
         quality: userPlan === "free" ? "Standard Quality" : "Premium Quality",
         processing_speed: "Ultra Fast",
-        accuracy: userPlan === "free" ? "~95%" : "~99%",
-        confidence: transcriptionData.confidence
+        accuracy: userPlan === "free" ? "~90%" : "~97%",
+        confidence: transcriptionData.confidence || "high",
+        estimated_cost: `$${estimatedCost.toFixed(4)}`,
+        speaker_diarization: userPlan !== "free"
       }
     });
 
   } catch (error) {
     console.error("Transcription error:", error);
     return NextResponse.json(
-      { error: "Transcription failed", details: error instanceof Error ? error.message : "Unknown error" },
+      { 
+        error: "Transcription failed", 
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }

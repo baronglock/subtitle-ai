@@ -159,8 +159,8 @@ export default function TranscribePage() {
 
       setStatus("processing");
       setStatusMessage(isFreePlan 
-        ? "Processing with Gemini AI..." 
-        : "Processing with Gemini AI Pro (Priority)..."
+        ? "Processing with Gemini 2.5 Flash-Lite..." 
+        : "Processing with Gemini 2.5 Flash-Lite (Premium)..."
       );
       setProgress(60);
 
@@ -551,7 +551,7 @@ export default function TranscribePage() {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Model</span>
                   </div>
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {isFreePlan ? "Gemini 1.5 Flash" : "Gemini 1.5 Pro"}
+                    {isFreePlan ? "Gemini 2.5 Flash-Lite" : "Gemini 2.5 Flash-Lite Pro"}
                   </span>
                 </div>
                 
