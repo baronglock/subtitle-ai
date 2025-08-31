@@ -56,15 +56,21 @@ function createSRTFromText(text: string, duration: number = 60): string {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("=== Transcription API called ===");
+  
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
+      console.log("No session found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    console.log("User authenticated:", session.user.email);
 
     const { fileName, sourceLanguage } = await request.json();
 
     if (!fileName) {
+      console.log("No fileName provided");
       return NextResponse.json({ error: "File name is required" }, { status: 400 });
     }
 
@@ -72,6 +78,7 @@ export async function POST(request: NextRequest) {
     const userPlan = (session.user as any).plan || "free";
 
     console.log("Starting transcription for:", fileName, "User plan:", userPlan);
+    console.log("Source language:", sourceLanguage || "auto-detect");
 
     // Download file from R2
     const key = `uploads/${session.user.email}/${fileName}`;
@@ -94,14 +101,28 @@ export async function POST(request: NextRequest) {
     
     // Check if Gemini API key is configured
     if (!process.env.GEMINI_API_KEY) {
-      console.error("GEMINI_API_KEY is not configured");
+      console.error("GEMINI_API_KEY is not configured in environment variables");
       return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
     }
 
+    console.log("Gemini API key present:", !!process.env.GEMINI_API_KEY);
+    console.log("API key length:", process.env.GEMINI_API_KEY?.length);
+    console.log("API key starts with:", process.env.GEMINI_API_KEY?.substring(0, 10) + "...");
+
     // Use Gemini 1.5 Flash for best cost efficiency
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash", // Updated to correct model name
-    });
+    let model;
+    try {
+      model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash", // Updated to correct model name
+      });
+      console.log("Gemini model initialized successfully");
+    } catch (modelError: any) {
+      console.error("Failed to initialize Gemini model:", modelError);
+      return NextResponse.json({ 
+        error: "Failed to initialize AI model", 
+        details: modelError.message 
+      }, { status: 500 });
+    }
 
     // Prepare the prompt based on user plan
     const languageHint = sourceLanguage && sourceLanguage !== "auto" 
@@ -193,19 +214,30 @@ Important: Return ONLY the JSON object, no additional text or markdown formattin
       });
 
     } catch (geminiError: any) {
-      console.error("Gemini API error:", geminiError);
+      console.error("=== Gemini API Error Details ===");
+      console.error("Error name:", geminiError.name);
+      console.error("Error message:", geminiError.message);
+      console.error("Error stack:", geminiError.stack);
+      console.error("Full error object:", JSON.stringify(geminiError, null, 2));
       
       // Return more specific error information
-      if (geminiError.message?.includes("API key")) {
+      if (geminiError.message?.includes("API key") || geminiError.message?.includes("API_KEY")) {
         return NextResponse.json(
           { error: "Invalid Gemini API key", details: "Please check your API key configuration" },
           { status: 500 }
         );
       }
       
-      if (geminiError.message?.includes("model")) {
+      if (geminiError.message?.includes("model") || geminiError.message?.includes("Model")) {
         return NextResponse.json(
           { error: "Model not available", details: "The specified Gemini model is not available" },
+          { status: 500 }
+        );
+      }
+
+      if (geminiError.message?.includes("quota") || geminiError.message?.includes("limit")) {
+        return NextResponse.json(
+          { error: "API quota exceeded", details: "Gemini API quota or rate limit exceeded" },
           { status: 500 }
         );
       }
@@ -220,7 +252,10 @@ Important: Return ONLY the JSON object, no additional text or markdown formattin
     }
 
   } catch (error: any) {
-    console.error("Transcription error:", error);
+    console.error("=== General Transcription Error ===");
+    console.error("Error name:", error.name);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     return NextResponse.json(
       { 
         error: "Transcription failed", 
