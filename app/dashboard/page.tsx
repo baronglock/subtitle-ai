@@ -106,7 +106,7 @@ export default function DashboardPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Welcome back, {session.user?.name || session.user?.email?.split('@')[0]}! Here's your activity overview.
+            Welcome back, {session.user?.name || session.user?.email?.split('@')[0]}! Here&apos;s your activity overview.
           </p>
         </div>
 
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      You've used {usagePercentage.toFixed(0)}% of your monthly limit.
+                      You&apos;ve used {usagePercentage.toFixed(0)}% of your monthly limit.
                     </p>
                   </div>
                 </div>

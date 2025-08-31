@@ -159,8 +159,8 @@ export default function TranscribePage() {
 
       setStatus("processing");
       setStatusMessage(isFreePlan 
-        ? "Processing with Whisper Medium AI model..." 
-        : "Processing with Whisper Large-V2 GPU-accelerated model..."
+        ? "Processing with Gemini AI..." 
+        : "Processing with Gemini AI Pro (Priority)..."
       );
       setProgress(60);
 
@@ -219,7 +219,7 @@ export default function TranscribePage() {
     setTranslationStatus("translating");
     setStatusMessage(isFreePlan 
       ? "Translating with Google Translate..." 
-      : "Translating with GPT-5-mini for premium quality..."
+      : "Translating with Gemini AI for premium quality..."
     );
 
     try {
@@ -241,7 +241,7 @@ export default function TranscribePage() {
       const result = await response.json();
       setTranslatedSrtContent(result.translatedText || result.srt);
       setTranslationStatus("completed");
-      setStatusMessage("Translation completed with " + (isFreePlan ? "Google Translate" : "GPT-5-mini AI"));
+      setStatusMessage("Translation completed with " + (isFreePlan ? "Google Translate" : "Gemini AI"));
       setActiveTab("translation");
     } catch (error) {
       setTranslationStatus("error");
@@ -551,7 +551,7 @@ export default function TranscribePage() {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Model</span>
                   </div>
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {isFreePlan ? "Whisper Medium" : "Whisper Large-V2"}
+                    {isFreePlan ? "Gemini 1.5 Flash" : "Gemini 1.5 Pro"}
                   </span>
                 </div>
                 
@@ -561,7 +561,7 @@ export default function TranscribePage() {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Processing</span>
                   </div>
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {isFreePlan ? "Standard CPU" : "GPU Accelerated"}
+                    {isFreePlan ? "Standard" : "Priority GPU"}
                   </span>
                 </div>
                 
@@ -571,7 +571,7 @@ export default function TranscribePage() {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Accuracy</span>
                   </div>
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {isFreePlan ? "~95%" : "~99%"}
+                    {isFreePlan ? "~90%" : "~99%"}
                   </span>
                 </div>
               </div>
@@ -820,7 +820,7 @@ export default function TranscribePage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                             {isFreePlan 
                               ? "Translate your subtitles to any language using Google Translate"
-                              : "Get premium quality translations powered by GPT-5-mini AI"
+                              : "Get premium quality translations powered by Gemini AI with context awareness"
                             }
                           </p>
                           
@@ -867,7 +867,7 @@ export default function TranscribePage() {
                               </p>
                             </div>
                             <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                              {isFreePlan ? "Using Google Translate" : "Enhanced with GPT-5-mini AI"}
+                              {isFreePlan ? "Using Google Translate" : "Enhanced with Gemini AI"}
                             </p>
                           </div>
                           

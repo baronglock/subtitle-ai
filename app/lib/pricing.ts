@@ -47,16 +47,16 @@ export const PRICING_PLANS: PricingPlan[] = [
     pricePerHour: { brl: 0, usd: 0 },
     features: [
       "30 minutes per month",
-      "Basic Google Translate",
-      "85% accuracy",
-      "Slower processing",
+      "Standard translation quality",
+      "~90% accuracy",
+      "Standard processing speed",
       "SRT export",
-      "5 languages",
+      "15+ languages",
       "Email support"
     ],
-    translationQuality: "Basic (Google Translate)",
-    accuracy: "85%",
-    speed: "Slow",
+    translationQuality: "Standard (Google Translate)",
+    accuracy: "90%",
+    speed: "Standard",
   },
   {
     id: "starter",
@@ -68,16 +68,16 @@ export const PRICING_PLANS: PricingPlan[] = [
     pricePerHour: { brl: 15, usd: 3 },
     features: [
       "5 hours (300 minutes) per month",
-      "GPT-5-mini translation",
-      "95% accuracy",
-      "Fast processing",
+      "Premium AI translation",
+      "~97% accuracy",
+      "Fast AI processing",
       "All export formats",
       "100+ languages",
       "Priority support",
       "API access"
     ],
-    translationQuality: "High Quality (GPT-5-mini)",
-    accuracy: "95%",
+    translationQuality: "Premium AI (Gemini 1.5)",
+    accuracy: "97%",
     speed: "Fast",
     popular: true
   },
@@ -91,9 +91,9 @@ export const PRICING_PLANS: PricingPlan[] = [
     pricePerHour: { brl: 13.99, usd: 2.80 },
     features: [
       "10 hours (600 minutes) per month",
-      "Premium GPT-5-mini translation",
-      "99.5% accuracy",
-      "Priority processing",
+      "Advanced AI translation with context",
+      "~99% accuracy",
+      "Priority GPU processing",
       "All export formats",
       "100+ languages",
       "24/7 priority support",
@@ -101,8 +101,8 @@ export const PRICING_PLANS: PricingPlan[] = [
       "Bulk uploads",
       "Custom glossary"
     ],
-    translationQuality: "Premium (GPT-5-mini with optimization)",
-    accuracy: "99.5%",
+    translationQuality: "Advanced AI (Gemini 1.5 Pro)",
+    accuracy: "99%",
     speed: "Priority",
   },
   {
@@ -115,9 +115,9 @@ export const PRICING_PLANS: PricingPlan[] = [
     pricePerHour: { brl: 0, usd: 0 }, // Unlimited
     features: [
       "Unlimited minutes",
-      "Professional GPT-5-mini",
-      "99.9% accuracy",
-      "Instant processing",
+      "Enterprise AI with custom training",
+      "~99.9% accuracy",
+      "Instant GPU processing",
       "All export formats",
       "100+ languages",
       "Dedicated support",
@@ -127,7 +127,7 @@ export const PRICING_PLANS: PricingPlan[] = [
       "Human revision option",
       "SLA guarantee"
     ],
-    translationQuality: "Professional (GPT-5-mini + Human Review)",
+    translationQuality: "Enterprise AI (Gemini Ultra)",
     accuracy: "99.9%",
     speed: "Instant",
   }
