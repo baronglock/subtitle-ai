@@ -71,6 +71,8 @@ export async function POST(request: NextRequest) {
     // Get user plan
     const userPlan = (session.user as any).plan || "free";
 
+    console.log("Starting transcription for:", fileName, "User plan:", userPlan);
+
     // Download file from R2
     const key = `uploads/${session.user.email}/${fileName}`;
     const command = new GetObjectCommand({
@@ -82,15 +84,23 @@ export async function POST(request: NextRequest) {
     const audioData = await response.Body?.transformToByteArray();
     
     if (!audioData) {
-      return NextResponse.json({ error: "Failed to download file" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to download file from storage" }, { status: 500 });
     }
+
+    console.log("Audio file downloaded, size:", audioData.length, "bytes");
 
     // Convert audio to base64 for Gemini
     const base64Audio = Buffer.from(audioData).toString('base64');
     
-    // Use Gemini 2.5 Flash-Lite for best cost efficiency ($0.045/hour)
+    // Check if Gemini API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not configured");
+      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+    }
+
+    // Use Gemini 1.5 Flash for best cost efficiency
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash", // Using 2.0 Flash as Flash-Lite might not be available yet
+      model: "gemini-1.5-flash", // Updated to correct model name
     });
 
     // Prepare the prompt based on user plan
@@ -98,105 +108,123 @@ export async function POST(request: NextRequest) {
       ? `The audio is in ${sourceLanguage}. ` 
       : "";
 
-    // Enhanced prompt for better transcription with timestamps
-    const prompt = userPlan !== "free"
-      ? `${languageHint}Please transcribe this audio file with speaker diarization and timestamps.
-         Format the output as JSON:
-         {
-           "transcription": "full text here",
-           "segments": [
-             {"speaker": "A", "start": 0, "end": 5, "text": "segment text"},
-           ],
-           "detected_language": "language name",
-           "duration": total_seconds,
-           "confidence": "high/medium/low"
-         }
-         
-         Use Speaker A, Speaker B, etc. to identify different speakers.
-         Be as accurate as possible with the transcription.`
-      : `${languageHint}Please transcribe this audio file accurately.
-         Return the transcription as JSON:
-         {
-           "transcription": "full text here",
-           "detected_language": "language name",
-           "duration": estimated_duration_in_seconds,
-           "confidence": "high/medium/low"
-         }`;
+    // Enhanced prompt for better transcription
+    const prompt = `${languageHint}Please transcribe this audio file accurately.
+Return the transcription as a valid JSON object with this exact structure:
+{
+  "transcription": "the complete transcribed text here",
+  "detected_language": "the detected language (e.g., English, Spanish, Portuguese)",
+  "duration": 60,
+  "confidence": "high"
+}
 
-    // Create the audio part for Gemini
-    const audioPart = {
-      inlineData: {
-        data: base64Audio,
-        mimeType: response.ContentType || "audio/mpeg",
-      },
-    };
+Important: Return ONLY the JSON object, no additional text or markdown formatting.`;
 
-    // Generate transcription
-    const result = await model.generateContent([prompt, audioPart]);
-    const responseText = result.response.text();
-    
-    // Parse the response
-    let transcriptionData;
     try {
-      // Extract JSON from response (Gemini might wrap it in markdown)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        transcriptionData = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("No JSON found in response");
-      }
-    } catch (parseError) {
-      // Fallback: treat entire response as transcription
-      transcriptionData = {
-        transcription: responseText,
-        detected_language: "Unknown",
-        duration: 60,
-        confidence: "medium"
+      // Create the audio part for Gemini
+      const audioPart = {
+        inlineData: {
+          data: base64Audio,
+          mimeType: response.ContentType || "audio/mpeg",
+        },
       };
-    }
 
-    // Generate SRT format
-    let srtContent;
-    if (transcriptionData.segments && Array.isArray(transcriptionData.segments)) {
-      // Use provided segments with timestamps
-      srtContent = formatToSRT(transcriptionData.segments);
-    } else {
-      // Create SRT from plain text
-      srtContent = createSRTFromText(
+      console.log("Sending to Gemini API with model: gemini-1.5-flash");
+
+      // Generate transcription
+      const result = await model.generateContent([prompt, audioPart]);
+      const responseText = result.response.text();
+      
+      console.log("Gemini response received, length:", responseText.length);
+
+      // Parse the response
+      let transcriptionData;
+      try {
+        // Extract JSON from response (Gemini might wrap it in markdown)
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          transcriptionData = JSON.parse(jsonMatch[0]);
+        } else {
+          // If no JSON found, treat as plain text response
+          transcriptionData = {
+            transcription: responseText.trim(),
+            detected_language: "Unknown",
+            duration: 60,
+            confidence: "medium"
+          };
+        }
+      } catch (parseError) {
+        console.error("Failed to parse Gemini response as JSON:", parseError);
+        // Fallback: treat entire response as transcription
+        transcriptionData = {
+          transcription: responseText,
+          detected_language: "Unknown",
+          duration: 60,
+          confidence: "medium"
+        };
+      }
+
+      // Generate SRT format
+      const srtContent = createSRTFromText(
         transcriptionData.transcription,
         transcriptionData.duration || 60
       );
+
+      // Calculate approximate cost (32 tokens per second of audio)
+      const estimatedTokens = (transcriptionData.duration || 60) * 32;
+      const estimatedCost = (estimatedTokens / 1000000) * 0.075; // $0.075 per 1M tokens for Flash
+
+      // Return the response
+      return NextResponse.json({
+        transcription: transcriptionData.transcription,
+        text: transcriptionData.transcription, // For compatibility
+        srt: srtContent,
+        detected_language: transcriptionData.detected_language || "Unknown",
+        language: transcriptionData.detected_language || "Unknown",
+        duration: transcriptionData.duration || 60,
+        processing_info: {
+          model_used: "Gemini 1.5 Flash",
+          quality: userPlan === "free" ? "Standard Quality" : "Premium Quality",
+          processing_speed: "Ultra Fast",
+          accuracy: userPlan === "free" ? "~90%" : "~97%",
+          confidence: transcriptionData.confidence || "high",
+          estimated_cost: `$${estimatedCost.toFixed(4)}`
+        }
+      });
+
+    } catch (geminiError: any) {
+      console.error("Gemini API error:", geminiError);
+      
+      // Return more specific error information
+      if (geminiError.message?.includes("API key")) {
+        return NextResponse.json(
+          { error: "Invalid Gemini API key", details: "Please check your API key configuration" },
+          { status: 500 }
+        );
+      }
+      
+      if (geminiError.message?.includes("model")) {
+        return NextResponse.json(
+          { error: "Model not available", details: "The specified Gemini model is not available" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { 
+          error: "Gemini transcription failed", 
+          details: geminiError.message || "Unknown Gemini API error"
+        },
+        { status: 500 }
+      );
     }
 
-    // Calculate approximate cost (32 tokens per second of audio)
-    const estimatedTokens = (transcriptionData.duration || 60) * 32;
-    const estimatedCost = (estimatedTokens / 1000000) * 0.30; // $0.30 per 1M tokens for Flash-Lite
-
-    // Return the response
-    return NextResponse.json({
-      transcription: transcriptionData.transcription,
-      text: transcriptionData.transcription, // For compatibility
-      srt: srtContent,
-      detected_language: transcriptionData.detected_language || "Unknown",
-      language: transcriptionData.detected_language || "Unknown",
-      duration: transcriptionData.duration || 60,
-      processing_info: {
-        model_used: "Gemini 2.5 Flash-Lite",
-        quality: userPlan === "free" ? "Standard Quality" : "Premium Quality",
-        processing_speed: "Ultra Fast",
-        accuracy: userPlan === "free" ? "~90%" : "~97%",
-        confidence: transcriptionData.confidence || "high",
-        estimated_cost: `$${estimatedCost.toFixed(4)}`,
-        speaker_diarization: userPlan !== "free"
-      }
-    });
-
-  } catch (error) {
+  } catch (error: any) {
     console.error("Transcription error:", error);
     return NextResponse.json(
       { 
         error: "Transcription failed", 
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error.message || "Unknown error"
       },
       { status: 500 }
     );
