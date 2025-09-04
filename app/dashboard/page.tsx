@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [userStats, setUserStats] = useState<any>({
     minutesUsed: 0,
     minutesLimit: 120, // 2 hours for free
@@ -81,30 +83,30 @@ export default function DashboardPage() {
   const stats = [
     {
       icon: <FileText className="w-6 h-6" />,
-      label: "Total Transcriptions",
+      label: t("dashboard.stats.transcriptions"),
       value: userStats.transcriptions.toString(),
-      change: "This month",
+      change: t("dashboard.stats.thisMonth"),
       trend: "neutral"
     },
     {
       icon: <Clock className="w-6 h-6" />,
-      label: "Minutes Used",
+      label: t("dashboard.stats.minutesUsed"),
       value: userStats.minutesUsed.toString(),
-      change: `of ${userStats.minutesLimit}`,
+      change: `${t("dashboard.stats.of")} ${userStats.minutesLimit}`,
       trend: usagePercentage > 80 ? "down" : "up"
     },
     {
       icon: <User className="w-6 h-6" />,
-      label: "Current Plan",
+      label: t("dashboard.stats.currentPlan"),
       value: userStats.plan.toUpperCase(),
-      change: "Active",
+      change: t("dashboard.stats.active"),
       trend: "neutral"
     },
     {
       icon: <Calendar className="w-6 h-6" />,
-      label: "Days Until Reset",
+      label: t("dashboard.stats.daysUntilReset"),
       value: daysUntilReset.toString(),
-      change: "days left",
+      change: t("dashboard.stats.daysLeft"),
       trend: "neutral"
     }
   ];
@@ -123,9 +125,9 @@ export default function DashboardPage() {
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("dashboard.title")}</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Welcome back, {session.user?.name || session.user?.email?.split('@')[0]}! Here&apos;s your activity overview.
+            {t("dashboard.welcome")}, {session.user?.name || session.user?.email?.split('@')[0]}! {t("dashboard.overview")}.
           </p>
         </div>
 
@@ -165,12 +167,12 @@ export default function DashboardPage() {
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">Recent Transcriptions</h2>
+                <h2 className="text-xl font-semibold">{t("dashboard.recentFiles")}</h2>
                 <Link
                   href="/transcribe"
                   className="text-blue-500 hover:text-blue-600 font-medium"
                 >
-                  New Transcription
+                  {t("dashboard.newTranscription")}
                 </Link>
               </div>
               
@@ -178,11 +180,11 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left text-sm text-gray-600 dark:text-gray-400 border-b dark:border-gray-700">
-                      <th className="pb-3">File Name</th>
-                      <th className="pb-3">Date</th>
-                      <th className="pb-3">Duration</th>
-                      <th className="pb-3">Language</th>
-                      <th className="pb-3">Status</th>
+                      <th className="pb-3">{t("dashboard.fileName")}</th>
+                      <th className="pb-3">{t("dashboard.date")}</th>
+                      <th className="pb-3">{t("dashboard.duration")}</th>
+                      <th className="pb-3">{t("dashboard.language")}</th>
+                      <th className="pb-3">{t("dashboard.status")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -231,11 +233,11 @@ export default function DashboardPage() {
           <div className="space-y-6">
             {/* Usage Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Monthly Usage</h3>
+              <h3 className="text-lg font-semibold mb-4">{t("dashboard.monthlyUsage")}</h3>
               <div className="mb-4">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600 dark:text-gray-400">
-                    {userStats.minutesUsed} / {userStats.minutesLimit} minutes
+                    {userStats.minutesUsed} / {userStats.minutesLimit} {t("dashboard.minutes")}
                   </span>
                   <span className="font-medium">{Math.min(usagePercentage, 100).toFixed(1)}%</span>
                 </div>
@@ -265,7 +267,7 @@ export default function DashboardPage() {
               )}
               
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Resets in {daysUntilReset} days
+                {t("dashboard.resetsIn")} {daysUntilReset} {t("dashboard.days")}
               </p>
               
               {userStats.plan === "free" && (
@@ -273,14 +275,14 @@ export default function DashboardPage() {
                   href="/pricing"
                   className="block w-full text-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all"
                 >
-                  Upgrade Plan
+                  {t("dashboard.upgradePlan")}
                 </Link>
               )}
             </div>
 
             {/* Quick Actions */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+              <h3 className="text-lg font-semibold mb-4">{t("dashboard.quickActions")}</h3>
               <div className="space-y-3">
                 <Link
                   href="/transcribe"
@@ -290,9 +292,9 @@ export default function DashboardPage() {
                     <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="font-medium">New Transcription</p>
+                    <p className="font-medium">{t("dashboard.newTranscription")}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Start a new transcription
+                      {t("dashboard.startNewTranscription")}
                     </p>
                   </div>
                 </Link>
@@ -305,9 +307,9 @@ export default function DashboardPage() {
                     <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <p className="font-medium">View Plans</p>
+                    <p className="font-medium">{t("dashboard.viewPlans")}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Upgrade for more features
+                      {t("dashboard.upgradeForMore")}
                     </p>
                   </div>
                 </Link>
@@ -316,11 +318,11 @@ export default function DashboardPage() {
 
             {/* Account Info */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-lg font-semibold mb-2">Account Details</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("dashboard.accountDetails")}</h3>
               <div className="space-y-2 text-sm opacity-90">
-                <p>Email: {session.user?.email}</p>
-                <p>Plan: {userStats.plan.toUpperCase()}</p>
-                <p>Member since: {new Date().toLocaleDateString()}</p>
+                <p>{t("dashboard.email")}: {session.user?.email}</p>
+                <p>{t("dashboard.plan")}: {userStats.plan.toUpperCase()}</p>
+                <p>{t("dashboard.memberSince")}: {new Date().toLocaleDateString()}</p>
               </div>
             </div>
           </div>

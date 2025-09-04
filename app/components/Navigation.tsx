@@ -86,14 +86,14 @@ export default function Navigation() {
                       className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      Dashboard
+                      {t("nav.dashboard")}
                     </Link>
                     <Link
                       href="/settings"
                       className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      Settings
+                      {t("nav.settings")}
                     </Link>
                     <hr className="my-1 border-gray-200 dark:border-gray-700" />
                     <button
@@ -104,7 +104,7 @@ export default function Navigation() {
                       className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2 text-red-600 dark:text-red-400"
                     >
                       <LogOut className="w-4 h-4" />
-                      <span>Sign Out</span>
+                      <span>{t("nav.signOut")}</span>
                     </button>
                   </div>
                 )}
@@ -121,6 +121,7 @@ export default function Navigation() {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-4">
+            <LanguageSelector />
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800"
@@ -158,7 +159,7 @@ export default function Navigation() {
             {session ? (
               <>
                 <div className="py-2 px-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t("nav.signedInAs")}</p>
                   <p className="font-medium">{session.user?.email}</p>
                 </div>
                 <button
@@ -168,7 +169,7 @@ export default function Navigation() {
                   }}
                   className="block w-full text-center px-4 py-2 bg-red-500 text-white rounded-lg font-medium"
                 >
-                  Sign Out
+                  {t("nav.signOut")}
                 </button>
               </>
             ) : (
@@ -177,7 +178,7 @@ export default function Navigation() {
                 className="block w-full text-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Sign In
+                {t("nav.signIn")}
               </Link>
             )}
           </div>

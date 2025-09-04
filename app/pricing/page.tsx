@@ -2,6 +2,9 @@
 
 import { Check, X } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const plans = [
   {
@@ -67,15 +70,30 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { t, language } = useLanguage();
+  
+  const handlePlanClick = (planName: string) => {
+    if (!session) {
+      router.push("/login");
+    } else if (planName === "Free") {
+      router.push("/dashboard");
+    } else {
+      // For paid plans, go to payment checkout
+      router.push(`/api/payment/checkout?plan=${planName.toLowerCase()}`);
+    }
+  };
+
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl lg:text-5xl font-bold mb-4">
-            Simple, Transparent Pricing
+            {t("pricing.title")}
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            Choose the plan that fits your needs. No hidden fees.
+            {t("pricing.subtitle")}
           </p>
         </div>
 
@@ -89,7 +107,7 @@ export default function PricingPage() {
             >
               {plan.popular && (
                 <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 text-sm font-semibold rounded-bl-lg">
-                  Most Popular
+                  {t("pricing.mostPopular")}
                 </div>
               )}
               
@@ -134,8 +152,8 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 
-                <Link
-                  href="/login"
+                <button
+                  onClick={() => handlePlanClick(plan.name)}
                   className={`block w-full text-center px-6 py-3 rounded-lg font-semibold transition-all ${
                     plan.popular
                       ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg"
@@ -143,7 +161,7 @@ export default function PricingPage() {
                   }`}
                 >
                   {plan.cta}
-                </Link>
+                </button>
               </div>
             </div>
           ))}
@@ -152,47 +170,43 @@ export default function PricingPage() {
         {/* FAQ Section */}
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-8">
-            Frequently Asked Questions
+            {t("pricing.faq.title")}
           </h2>
           
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               <h3 className="font-semibold mb-2">
-                How accurate is the transcription?
+                {t("pricing.faq.accuracyQuestion")}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Our AI achieves 99.5% accuracy for clear audio in supported languages.
-                Accuracy may vary based on audio quality and background noise.
+                {t("pricing.faq.accuracyAnswer")}
               </p>
             </div>
             
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               <h3 className="font-semibold mb-2">
-                Can I cancel my subscription anytime?
+                {t("pricing.faq.cancelQuestion")}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Yes, you can cancel your subscription at any time. You&apos;ll continue to
-                have access until the end of your billing period.
+                {t("pricing.faq.cancelAnswer")}
               </p>
             </div>
             
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               <h3 className="font-semibold mb-2">
-                What file formats do you support?
+                {t("pricing.faq.formatsQuestion")}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                We support all major audio and video formats including MP3, WAV, MP4,
-                M4A, WebM, MOV, AVI, and more.
+                {t("pricing.faq.formatsAnswer")}
               </p>
             </div>
             
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               <h3 className="font-semibold mb-2">
-                Is my data secure?
+                {t("pricing.faq.securityQuestion")}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Yes, all files are encrypted during transfer and storage. Files are
-                automatically deleted after processing to ensure your privacy.
+                {t("pricing.faq.securityAnswer")}
               </p>
             </div>
           </div>
@@ -201,16 +215,16 @@ export default function PricingPage() {
         {/* CTA Section */}
         <div className="text-center mt-16">
           <h2 className="text-3xl font-bold mb-4">
-            Still have questions?
+            {t("pricing.cta.questionsTitle")}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Our team is here to help you get started
+            {t("pricing.cta.questionsSubtitle")}
           </p>
           <Link
             href="/contact"
             className="inline-block px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
           >
-            Contact Support
+            {t("pricing.cta.contactSupport")}
           </Link>
         </div>
       </div>

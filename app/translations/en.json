@@ -7,7 +7,10 @@
     "contact": "Contact",
     "login": "Login",
     "signup": "Sign Up",
-    "logout": "Logout"
+    "logout": "Logout",
+    "signIn": "Sign In",
+    "signedInAs": "Signed in as",
+    "settings": "Settings"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -28,7 +31,26 @@
     "viewAll": "View All",
     "usageOverview": "Usage Overview",
     "minutesRemaining": "minutes remaining",
-    "upgradeNow": "Upgrade Now"
+    "upgradeNow": "Upgrade Now",
+    "newTranscription": "New Transcription",
+    "fileName": "File Name",
+    "date": "Date",
+    "duration": "Duration",
+    "language": "Language",
+    "status": "Status",
+    "monthlyUsage": "Monthly Usage",
+    "minutes": "minutes",
+    "resetsIn": "Resets in",
+    "days": "days",
+    "upgradePlan": "Upgrade Plan",
+    "quickActions": "Quick Actions",
+    "startNewTranscription": "Start a new transcription",
+    "viewPlans": "View Plans",
+    "upgradeForMore": "Upgrade for more features",
+    "accountDetails": "Account Details",
+    "email": "Email",
+    "plan": "Plan",
+    "memberSince": "Member since"
   },
   "transcribe": {
     "title": "AI Transcription Studio",
@@ -94,6 +116,22 @@
     "startTrial": "Start Free Trial",
     "getStarted": "Get Started",
     "contactSales": "Contact Sales",
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "accuracyQuestion": "How accurate is the transcription?",
+      "accuracyAnswer": "Our AI achieves 99.5% accuracy for clear audio in supported languages. Accuracy may vary based on audio quality and background noise.",
+      "cancelQuestion": "Can I cancel my subscription anytime?",
+      "cancelAnswer": "Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.",
+      "formatsQuestion": "What file formats do you support?",
+      "formatsAnswer": "We support all major audio and video formats including MP3, WAV, MP4, M4A, WebM, MOV, AVI, and more.",
+      "securityQuestion": "Is my data secure?",
+      "securityAnswer": "Yes, all files are encrypted during transfer and storage. Files are automatically deleted after processing to ensure your privacy."
+    },
+    "cta": {
+      "questionsTitle": "Still have questions?",
+      "questionsSubtitle": "Our team is here to help you get started",
+      "contactSupport": "Contact Support"
+    },
     "plans": {
       "free": {
         "name": "Free",

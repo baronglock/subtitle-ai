@@ -7,7 +7,11 @@
     "contact": "Contato",
     "login": "Entrar",
     "signup": "Cadastrar",
-    "logout": "Sair"
+    "logout": "Sair",
+    "signIn": "Entrar",
+    "settings": "Configurações",
+    "signOut": "Sair",
+    "signedInAs": "Conectado como"
   },
   "dashboard": {
     "title": "Painel de Controle",
@@ -28,7 +32,26 @@
     "viewAll": "Ver Todas",
     "usageOverview": "Visão Geral de Uso",
     "minutesRemaining": "minutos restantes",
-    "upgradeNow": "Fazer Upgrade"
+    "upgradeNow": "Fazer Upgrade",
+    "newTranscription": "Nova Transcrição",
+    "fileName": "Nome do Arquivo",
+    "date": "Data",
+    "duration": "Duração",
+    "language": "Idioma",
+    "status": "Status",
+    "monthlyUsage": "Uso Mensal",
+    "minutes": "minutos",
+    "resetsIn": "Renova em",
+    "days": "dias",
+    "upgradePlan": "Fazer Upgrade",
+    "quickActions": "Ações Rápidas",
+    "startNewTranscription": "Iniciar nova transcrição",
+    "viewPlans": "Ver Planos",
+    "upgradeForMore": "Faça upgrade para mais recursos",
+    "accountDetails": "Detalhes da Conta",
+    "email": "Email",
+    "plan": "Plano",
+    "memberSince": "Membro desde"
   },
   "transcribe": {
     "title": "Estúdio de Transcrição IA",
@@ -94,6 +117,22 @@
     "startTrial": "Iniciar Teste Grátis",
     "getStarted": "Começar Agora",
     "contactSales": "Falar com Vendas",
+    "faq": {
+      "title": "Perguntas Frequentes",
+      "accuracyQuestion": "Qual é a precisão da transcrição?",
+      "accuracyAnswer": "Nossa IA atinge 99,5% de precisão para áudio claro em idiomas suportados. A precisão pode variar com base na qualidade do áudio e ruído de fundo.",
+      "cancelQuestion": "Posso cancelar minha assinatura a qualquer momento?",
+      "cancelAnswer": "Sim, você pode cancelar sua assinatura a qualquer momento. Você continuará tendo acesso até o final do período de cobrança.",
+      "formatsQuestion": "Quais formatos de arquivo vocês suportam?",
+      "formatsAnswer": "Suportamos todos os principais formatos de áudio e vídeo incluindo MP3, WAV, MP4, M4A, WebM, MOV, AVI e mais.",
+      "securityQuestion": "Meus dados estão seguros?",
+      "securityAnswer": "Sim, todos os arquivos são criptografados durante a transferência e armazenamento. Os arquivos são automaticamente excluídos após o processamento para garantir sua privacidade."
+    },
+    "cta": {
+      "questionsTitle": "Ainda tem dúvidas?",
+      "questionsSubtitle": "Nossa equipe está aqui para ajudá-lo a começar",
+      "contactSupport": "Falar com Suporte"
+    },
     "plans": {
       "free": {
         "name": "Grátis",
