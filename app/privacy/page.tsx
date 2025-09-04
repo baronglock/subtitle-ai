@@ -1,9 +1,9 @@
 "use client";
 
-import { useI18n } from "../i18n/provider";
+// Translation removed temporarily
 
 export default function PrivacyPage() {
-  const { locale } = useI18n();
+  const locale: string = "en"; // Temporary fix
 
   return (
     <div className="min-h-screen py-12 px-4">

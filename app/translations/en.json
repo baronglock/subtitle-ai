@@ -1,0 +1,123 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "transcribe": "Transcribe",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "overview": "Here's your activity overview",
+    "stats": {
+      "transcriptions": "Total Transcriptions",
+      "minutesUsed": "Minutes Used",
+      "currentPlan": "Current Plan",
+      "daysUntilReset": "Days Until Reset",
+      "thisMonth": "This month",
+      "of": "of",
+      "active": "Active",
+      "daysLeft": "days left"
+    },
+    "recentFiles": "Recent Transcriptions",
+    "noTranscriptions": "No transcriptions yet",
+    "viewAll": "View All",
+    "usageOverview": "Usage Overview",
+    "minutesRemaining": "minutes remaining",
+    "upgradeNow": "Upgrade Now"
+  },
+  "transcribe": {
+    "title": "AI Transcription Studio",
+    "subtitle": "Professional Audio & Video Transcription",
+    "upload": {
+      "title": "Upload Your File",
+      "description": "Drag & drop or click to browse",
+      "supportedFormats": "Supported formats",
+      "maxSize": "Max file size: 200MB",
+      "button": "Select File"
+    },
+    "language": {
+      "source": "Source Language",
+      "target": "Target Language",
+      "auto": "Auto-detect"
+    },
+    "processing": {
+      "uploading": "Preparing your file for processing...",
+      "transcribing": "Processing your audio...",
+      "transcribingPremium": "Processing with premium quality...",
+      "completed": "Transcription completed successfully!",
+      "error": "An error occurred"
+    },
+    "results": {
+      "transcription": "Transcription",
+      "subtitles": "Subtitles (SRT)",
+      "translation": "Translation",
+      "download": "Download",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "translate": "Translate",
+      "quality": "Quality",
+      "accuracy": "Accuracy",
+      "speed": "Speed",
+      "processingDetails": "Processing Details"
+    },
+    "translation": {
+      "title": "Translate Your Subtitles",
+      "description": "Translate your subtitles to any language",
+      "descriptionPremium": "Get premium quality translations with context awareness",
+      "button": "Translate Now",
+      "processing": "Translating your content...",
+      "processingPremium": "Translating with premium quality...",
+      "completed": "Translation completed successfully",
+      "standard": "Standard Translation",
+      "premium": "Premium Translation"
+    },
+    "plan": {
+      "free": "Free Plan",
+      "pro": "Pro",
+      "premium": "Premium",
+      "limit": "2h/month",
+      "quality": {
+        "standard": "Standard Quality",
+        "premium": "Premium Quality"
+      }
+    }
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Choose the plan that fits your needs. No hidden fees.",
+    "mostPopular": "Most Popular",
+    "startTrial": "Start Free Trial",
+    "getStarted": "Get Started",
+    "contactSales": "Contact Sales",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "Perfect for trying out our service"
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For content creators and professionals"
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "For teams and heavy users"
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close"
+  }
+}

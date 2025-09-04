@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { Moon, Sun, Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
-import { useI18n } from "../i18n/provider";
-import LanguageSwitcher from "./LanguageSwitcher";
+import { useLanguage } from "../contexts/LanguageContext";
+import { LanguageSelector } from "./LanguageSelector";
 import { useSession, signOut } from "next-auth/react";
 
 export default function Navigation() {
   const { theme, toggleTheme } = useTheme();
-  const { t } = useI18n();
+  const { t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -53,7 +53,7 @@ export default function Navigation() {
               </Link>
             ))}
             
-            <LanguageSwitcher />
+            <LanguageSelector />
             
             <button
               onClick={toggleTheme}

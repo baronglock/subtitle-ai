@@ -1,0 +1,153 @@
+{
+  "nav": {
+    "home": "Início",
+    "dashboard": "Painel",
+    "transcribe": "Transcrever",
+    "pricing": "Preços",
+    "contact": "Contato",
+    "login": "Entrar",
+    "signup": "Cadastrar",
+    "logout": "Sair"
+  },
+  "dashboard": {
+    "title": "Painel de Controle",
+    "welcome": "Bem-vindo de volta",
+    "overview": "Aqui está sua visão geral de atividades",
+    "stats": {
+      "transcriptions": "Total de Transcrições",
+      "minutesUsed": "Minutos Usados",
+      "currentPlan": "Plano Atual",
+      "daysUntilReset": "Dias até Renovar",
+      "thisMonth": "Este mês",
+      "of": "de",
+      "active": "Ativo",
+      "daysLeft": "dias restantes"
+    },
+    "recentFiles": "Transcrições Recentes",
+    "noTranscriptions": "Nenhuma transcrição ainda",
+    "viewAll": "Ver Todas",
+    "usageOverview": "Visão Geral de Uso",
+    "minutesRemaining": "minutos restantes",
+    "upgradeNow": "Fazer Upgrade"
+  },
+  "transcribe": {
+    "title": "Estúdio de Transcrição IA",
+    "subtitle": "Transcrição Profissional de Áudio e Vídeo",
+    "upload": {
+      "title": "Enviar Seu Arquivo",
+      "description": "Arraste e solte ou clique para procurar",
+      "supportedFormats": "Formatos suportados",
+      "maxSize": "Tamanho máximo: 200MB",
+      "button": "Selecionar Arquivo"
+    },
+    "language": {
+      "source": "Idioma de Origem",
+      "target": "Idioma de Destino",
+      "auto": "Detecção automática"
+    },
+    "processing": {
+      "uploading": "Preparando seu arquivo para processamento...",
+      "transcribing": "Processando seu áudio...",
+      "transcribingPremium": "Processando com qualidade premium...",
+      "completed": "Transcrição concluída com sucesso!",
+      "error": "Ocorreu um erro"
+    },
+    "results": {
+      "transcription": "Transcrição",
+      "subtitles": "Legendas (SRT)",
+      "translation": "Tradução",
+      "download": "Baixar",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "translate": "Traduzir",
+      "quality": "Qualidade",
+      "accuracy": "Precisão",
+      "speed": "Velocidade",
+      "processingDetails": "Detalhes do Processamento"
+    },
+    "translation": {
+      "title": "Traduzir Suas Legendas",
+      "description": "Traduza suas legendas para qualquer idioma",
+      "descriptionPremium": "Obtenha traduções de qualidade premium com contexto",
+      "button": "Traduzir Agora",
+      "processing": "Traduzindo seu conteúdo...",
+      "processingPremium": "Traduzindo com qualidade premium...",
+      "completed": "Tradução concluída com sucesso",
+      "standard": "Tradução Padrão",
+      "premium": "Tradução Premium"
+    },
+    "plan": {
+      "free": "Plano Grátis",
+      "pro": "Pro",
+      "premium": "Premium",
+      "limit": "2h/mês",
+      "quality": {
+        "standard": "Qualidade Padrão",
+        "premium": "Qualidade Premium"
+      }
+    }
+  },
+  "pricing": {
+    "title": "Preços Simples e Transparentes",
+    "subtitle": "Escolha o plano que atende suas necessidades. Sem taxas ocultas.",
+    "mostPopular": "Mais Popular",
+    "startTrial": "Iniciar Teste Grátis",
+    "getStarted": "Começar Agora",
+    "contactSales": "Falar com Vendas",
+    "plans": {
+      "free": {
+        "name": "Grátis",
+        "description": "Perfeito para experimentar nosso serviço",
+        "features": {
+          "hours": "2 horas por mês (120 min)",
+          "quality": "Transcrição de qualidade padrão",
+          "export": "Exportação SRT e TXT",
+          "languages": "10 idiomas",
+          "translation": "Tradução básica",
+          "support": "Suporte por email",
+          "priority": "Processamento prioritário",
+          "speaker": "Detecção de locutor"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Para criadores de conteúdo e profissionais",
+        "features": {
+          "hours": "10 horas por mês (600 min)",
+          "quality": "Transcrição de qualidade premium",
+          "export": "Todos os formatos de exportação",
+          "languages": "50+ idiomas",
+          "translation": "Tradução IA premium",
+          "support": "Suporte prioritário",
+          "priority": "Processamento 2x mais rápido",
+          "speaker": "Detecção de locutor"
+        }
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Para equipes e uso intensivo",
+        "features": {
+          "hours": "30 horas por mês (1800 min)",
+          "quality": "Transcrição ultra-premium",
+          "export": "Todos os formatos + API",
+          "languages": "100+ idiomas",
+          "translation": "Tradução IA neural",
+          "support": "Suporte 24/7 prioritário",
+          "priority": "Processamento 5x mais rápido",
+          "speaker": "Diarização avançada de locutor"
+        }
+      }
+    }
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "close": "Fechar"
+  }
+}

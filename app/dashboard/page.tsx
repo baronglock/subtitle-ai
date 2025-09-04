@@ -11,9 +11,11 @@ export default function DashboardPage() {
   const router = useRouter();
   const [userStats, setUserStats] = useState<any>({
     minutesUsed: 0,
-    minutesLimit: 30,
+    minutesLimit: 120, // 2 hours for free
     plan: "free",
-    transcriptions: 0
+    transcriptions: 0,
+    minutesRemaining: 120,
+    percentageUsed: 0
   });
   const [recentFiles, setRecentFiles] = useState<any[]>([]);
 
@@ -24,14 +26,31 @@ export default function DashboardPage() {
       return;
     }
 
-    // Get user data from session
-    const userData = session.user as any;
-    setUserStats({
-      minutesUsed: userData?.minutesUsed || 0,
-      minutesLimit: userData?.minutesLimit || 30,
-      plan: userData?.plan || "free",
-      transcriptions: userData?.transcriptions || 0
-    });
+    // Fetch real usage data
+    const fetchUsage = async () => {
+      try {
+        const response = await fetch('/api/usage');
+        if (response.ok) {
+          const usage = await response.json();
+          const limits: any = { free: 120, pro: 600, premium: 1800 };
+          const userPlan = (session.user as any).plan || "free";
+          const limit = limits[userPlan];
+          
+          setUserStats({
+            minutesUsed: Math.round(usage.minutesUsed || 0),
+            minutesLimit: limit,
+            plan: userPlan,
+            transcriptions: usage.transcriptionCount || 0,
+            minutesRemaining: Math.round(usage.minutesRemaining || limit),
+            percentageUsed: usage.percentageUsed || 0
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch usage:', error);
+      }
+    };
+
+    fetchUsage();
 
     // Get recent files from localStorage
     const stored = localStorage.getItem('recentTranscriptions');
@@ -57,7 +76,7 @@ export default function DashboardPage() {
   }
 
   const daysUntilReset = Math.max(0, 30 - new Date().getDate());
-  const usagePercentage = (userStats.minutesUsed / userStats.minutesLimit) * 100;
+  const usagePercentage = userStats.percentageUsed;
 
   const stats = [
     {

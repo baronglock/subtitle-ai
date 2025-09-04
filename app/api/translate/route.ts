@@ -136,8 +136,8 @@ export async function POST(request: Request) {
     }
 
     const quality = userPlan === "free" 
-      ? "Standard (Google Translate)" 
-      : "Premium AI (Gemini 1.5 - 99% accuracy with context)";
+      ? "Standard" 
+      : "Premium (99% accuracy with context)";
 
     return NextResponse.json({
       translatedText,
@@ -145,8 +145,7 @@ export async function POST(request: Request) {
       sourceLanguage: sourceLanguage,
       targetLanguage,
       quality,
-      userPlan,
-      translationEngine: userPlan === "free" ? "Google Translate" : "Gemini AI"
+      userPlan
     });
   } catch (error) {
     console.error("Translation error:", error);

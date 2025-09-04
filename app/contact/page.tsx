@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Mail, MessageSquare, Send } from "lucide-react";
-import { useI18n } from "../i18n/provider";
+// Translation removed temporarily
 
 export default function ContactPage() {
-  const { locale } = useI18n();
+  const locale: string = "en"; // Temporary fix
   const [formData, setFormData] = useState({
     name: "",
     email: "",

@@ -552,7 +552,7 @@ export default function TranscribePage() {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Model</span>
                   </div>
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {isFreePlan ? "Gemini 2.5 Flash-Lite" : "Gemini 2.5 Flash-Lite Pro"}
+                    {isFreePlan ? "Standard Quality" : "Premium Quality"}
                   </span>
                 </div>
                 
@@ -820,8 +820,8 @@ export default function TranscribePage() {
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                             {isFreePlan 
-                              ? "Translate your subtitles to any language using Google Translate"
-                              : "Get premium quality translations powered by Gemini AI with context awareness"
+                              ? "Translate your subtitles to any language"
+                              : "Get premium quality translations with context awareness"
                             }
                           </p>
                           
@@ -868,7 +868,7 @@ export default function TranscribePage() {
                               </p>
                             </div>
                             <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                              {isFreePlan ? "Using Google Translate" : "Enhanced with Gemini AI"}
+                              {isFreePlan ? "Standard Translation" : "Premium Translation"}
                             </p>
                           </div>
                           
@@ -933,11 +933,7 @@ export default function TranscribePage() {
                   <Info className="w-5 h-5 text-indigo-500" />
                   Processing Details
                 </h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Model Used</p>
-                    <p className="font-bold text-gray-900 dark:text-white">{processingInfo.model_used}</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Quality</p>
                     <p className="font-bold text-gray-900 dark:text-white">{processingInfo.quality}</p>
