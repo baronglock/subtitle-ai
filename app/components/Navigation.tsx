@@ -8,6 +8,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { LanguageSelector } from "./LanguageSelector";
 import { useSession, signOut } from "next-auth/react";
+import Logo from "./Logo";
 
 export default function Navigation() {
   const { theme, toggleTheme } = useTheme();
@@ -31,9 +32,8 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg"></div>
-              <span className="font-bold text-xl dark:text-white">SubtitleAI</span>
+            <Link href="/">
+              <Logo size="md" />
             </Link>
           </div>
 

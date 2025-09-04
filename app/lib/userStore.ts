@@ -12,6 +12,10 @@ interface User {
   minutesLimit: number;
   createdAt: Date;
   stripeCustomerId?: string;
+  stripePaymentIntentId?: string;
+  subscriptionStatus?: "active" | "inactive" | "cancelled";
+  subscriptionStartDate?: Date;
+  subscriptionEndDate?: Date;
   provider?: string; // For OAuth (google, github)
 }
 
@@ -206,6 +210,49 @@ export async function resetUserUsage(userId: string): Promise<void> {
     const user = inMemoryUsers.find(u => u.id === userId);
     if (user) {
       user.minutesUsed = 0;
+    }
+  }
+}
+
+// Update user subscription after successful payment
+export async function updateUserSubscription(
+  userId: string, 
+  plan: "pro" | "enterprise",
+  paymentIntentId: string
+): Promise<void> {
+  const planLimits = {
+    pro: 600, // 10 hours
+    enterprise: 1800, // 30 hours
+  };
+
+  if (USE_KV && kv) {
+    try {
+      const emails = await kv.smembers("users:all");
+      for (const email of emails) {
+        const user = await kv.get(`user:${email}`) as User;
+        if (user && user.id === userId) {
+          user.plan = plan;
+          user.minutesLimit = planLimits[plan];
+          user.stripePaymentIntentId = paymentIntentId;
+          user.subscriptionStatus = "active";
+          user.subscriptionStartDate = new Date();
+          user.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          await kv.set(`user:${email}`, user);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("KV error in updateUserSubscription:", error);
+    }
+  } else {
+    const user = inMemoryUsers.find(u => u.id === userId);
+    if (user) {
+      user.plan = plan;
+      user.minutesLimit = planLimits[plan];
+      user.stripePaymentIntentId = paymentIntentId;
+      user.subscriptionStatus = "active";
+      user.subscriptionStartDate = new Date();
+      user.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     }
   }
 }

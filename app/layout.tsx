@@ -9,7 +9,7 @@ import Navigation from "./components/Navigation";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SubtitleAI - Professional AI-Powered Transcription & Subtitles",
+  title: "SubtleAI - Professional AI-Powered Transcription & Subtitles",
   description: "Generate accurate subtitles and transcriptions in any language using advanced AI technology",
 };
 

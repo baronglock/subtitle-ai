@@ -81,7 +81,7 @@ export default function PricingPage() {
       router.push("/dashboard");
     } else {
       // For paid plans, go to payment checkout
-      router.push(`/api/payment/checkout?plan=${planName.toLowerCase()}`);
+      router.push(`/checkout?plan=${planName.toLowerCase()}`);
     }
   };
 
