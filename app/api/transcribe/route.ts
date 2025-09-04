@@ -67,21 +67,25 @@ export async function POST(request: NextRequest) {
 
     console.log("User authenticated:", session.user.email);
 
-    const { fileName, sourceLanguage } = await request.json();
+    const { fileName, fileKey, sourceLanguage } = await request.json();
 
-    if (!fileName) {
-      console.log("No fileName provided");
-      return NextResponse.json({ error: "File name is required" }, { status: 400 });
+    if (!fileName && !fileKey) {
+      console.log("No fileName or fileKey provided");
+      return NextResponse.json({ error: "File name or key is required" }, { status: 400 });
     }
 
     // Get user plan
     const userPlan = (session.user as any).plan || "free";
 
-    console.log("Starting transcription for:", fileName, "User plan:", userPlan);
+    console.log("Starting transcription for:", fileName || fileKey, "User plan:", userPlan);
     console.log("Source language:", sourceLanguage || "auto-detect");
 
     // Download file from R2
-    const key = `uploads/${session.user.email}/${fileName}`;
+    // Usar fileKey se disponível (novo método), senão usar fileName (compatibilidade)
+    const key = fileKey || `uploads/${session.user.email}/${fileName}`;
+    
+    console.log("Attempting to download file from R2 with key:", key);
+    
     const command = new GetObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,

@@ -144,7 +144,7 @@ export default function TranscribePage() {
 
       if (!uploadUrlResponse.ok) throw new Error("Failed to get upload URL");
 
-      const { url } = await uploadUrlResponse.json();
+      const { url, key } = await uploadUrlResponse.json();
       setStatusMessage("Uploading to secure cloud storage...");
       setProgress(30);
 
@@ -169,7 +169,8 @@ export default function TranscribePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileName: file.name,
+          fileName: file.name,  // Manter para compatibilidade
+          fileKey: key,         // Adicionar a key real do arquivo no R2
           sourceLanguage: sourceLanguage !== "auto" ? sourceLanguage : undefined,
         }),
       });
