@@ -159,8 +159,8 @@ export default function TranscribePage() {
 
       setStatus("processing");
       setStatusMessage(isFreePlan 
-        ? "Processing with Gemini 2.5 Flash-Lite..." 
-        : "Processing with Gemini 2.5 Flash-Lite (Premium)..."
+        ? "Processing your audio..." 
+        : "Processing with premium quality..."
       );
       setProgress(60);
 
@@ -219,8 +219,8 @@ export default function TranscribePage() {
 
     setTranslationStatus("translating");
     setStatusMessage(isFreePlan 
-      ? "Translating with Google Translate..." 
-      : "Translating with Gemini AI for premium quality..."
+      ? "Translating your content..." 
+      : "Translating with premium quality..."
     );
 
     try {
@@ -242,7 +242,7 @@ export default function TranscribePage() {
       const result = await response.json();
       setTranslatedSrtContent(result.translatedText || result.srt);
       setTranslationStatus("completed");
-      setStatusMessage("Translation completed with " + (isFreePlan ? "Google Translate" : "Gemini AI"));
+      setStatusMessage("Translation completed successfully");
       setActiveTab("translation");
     } catch (error) {
       setTranslationStatus("error");
@@ -330,7 +330,7 @@ export default function TranscribePage() {
                   AI Transcription Studio
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Powered by OpenAI Whisper Technology
+                  Professional Audio & Video Transcription
                 </p>
               </div>
             </div>
@@ -347,7 +347,7 @@ export default function TranscribePage() {
                     <>
                       <Sparkles className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Free Plan</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-500">• Medium Model</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-500">• 2h/month</span>
                     </>
                   ) : (
                     <>
@@ -355,7 +355,7 @@ export default function TranscribePage() {
                       <span className="text-sm font-bold text-white">
                         {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                       </span>
-                      <span className="text-xs text-white/80">• Large-V2 GPU</span>
+                      <span className="text-xs text-white/80">• Premium Quality</span>
                     </>
                   )}
                 </div>

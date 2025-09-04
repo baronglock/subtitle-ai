@@ -9,51 +9,57 @@ const plans = [
     price: "$0",
     period: "forever",
     description: "Perfect for trying out our service",
+    technology: "Standard AI Model",
+    accuracy: "~90% accuracy",
     features: [
-      { text: "30 minutes per month", included: true },
-      { text: "Basic transcription", included: true },
-      { text: "SRT export", included: true },
-      { text: "5 languages", included: true },
+      { text: "2 hours per month (120 min)", included: true },
+      { text: "Standard quality transcription", included: true },
+      { text: "SRT & TXT export", included: true },
+      { text: "10 languages", included: true },
+      { text: "Basic translation", included: true },
       { text: "Email support", included: true },
-      { text: "API access", included: false },
       { text: "Priority processing", included: false },
-      { text: "Bulk uploads", included: false },
+      { text: "Speaker detection", included: false },
     ],
     cta: "Get Started",
     popular: false,
   },
   {
     name: "Pro",
-    price: "$19",
+    price: "$29",
     period: "per month",
     description: "For content creators and professionals",
+    technology: "Advanced AI Model",
+    accuracy: "~95% accuracy",
     features: [
-      { text: "500 minutes per month", included: true },
-      { text: "Advanced AI transcription", included: true },
+      { text: "10 hours per month (600 min)", included: true },
+      { text: "Premium quality transcription", included: true },
       { text: "All export formats", included: true },
-      { text: "100+ languages", included: true },
+      { text: "50+ languages", included: true },
+      { text: "Premium AI translation", included: true },
       { text: "Priority support", included: true },
-      { text: "API access", included: true },
-      { text: "Priority processing", included: true },
-      { text: "Bulk uploads", included: false },
+      { text: "2x faster processing", included: true },
+      { text: "Speaker detection", included: true },
     ],
     cta: "Start Free Trial",
     popular: true,
   },
   {
-    name: "Enterprise",
+    name: "Premium",
     price: "$99",
     period: "per month",
-    description: "For teams and organizations",
+    description: "For teams and heavy users",
+    technology: "Enterprise AI Model",
+    accuracy: "~98% accuracy",
     features: [
-      { text: "Unlimited minutes", included: true },
-      { text: "Custom AI models", included: true },
-      { text: "All export formats", included: true },
+      { text: "30 hours per month (1800 min)", included: true },
+      { text: "Ultra-premium transcription", included: true },
+      { text: "All export formats + API", included: true },
       { text: "100+ languages", included: true },
-      { text: "24/7 phone support", included: true },
-      { text: "API access", included: true },
-      { text: "Priority processing", included: true },
-      { text: "Bulk uploads", included: true },
+      { text: "Neural AI translation", included: true },
+      { text: "24/7 priority support", included: true },
+      { text: "5x faster processing", included: true },
+      { text: "Advanced speaker diarization", included: true },
     ],
     cta: "Contact Sales",
     popular: false,
@@ -95,9 +101,17 @@ export default function PricingPage() {
                     {plan.period}
                   </span>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
                   {plan.description}
                 </p>
+                <div className="mb-6 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {plan.technology}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {plan.accuracy}
+                  </p>
+                </div>
                 
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, featureIndex) => (

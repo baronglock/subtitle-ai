@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../lib/auth";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { trackUsage, checkIPAbuse, registerIPForUser } from "../../lib/usageTracker";
 
 // Força uso do Cloudflare R2, nunca AWS S3
 const s3Client = new S3Client({
@@ -68,6 +69,22 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("User authenticated:", session.user.email);
+    
+    // Get user IP for abuse detection
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+    
+    // Check for IP abuse
+    const isAbuse = await checkIPAbuse(ip);
+    if (isAbuse) {
+      console.log("IP abuse detected for:", ip);
+      return NextResponse.json({ 
+        error: "Too many accounts from this IP address. Please contact support." 
+      }, { status: 429 });
+    }
+    
+    // Register IP for this user
+    await registerIPForUser(ip, session.user.email);
 
     const { fileName, fileKey, sourceLanguage } = await request.json();
 
@@ -203,6 +220,22 @@ Important: Return ONLY the JSON object, no additional text or markdown formattin
       // Calculate approximate cost (32 tokens per second of audio)
       const estimatedTokens = (transcriptionData.duration || 60) * 32;
       const estimatedCost = (estimatedTokens / 1000000) * 0.075; // $0.075 per 1M tokens for Flash
+      
+      // Track usage
+      const usageResult = await trackUsage(
+        session.user.email,
+        transcriptionData.duration || 60,
+        ip,
+        userPlan
+      );
+      
+      if (!usageResult.success) {
+        return NextResponse.json({ 
+          error: "Monthly transcription limit exceeded",
+          minutesUsed: usageResult.minutesUsed,
+          minutesRemaining: 0
+        }, { status: 403 });
+      }
 
       // Return the response
       return NextResponse.json({
@@ -213,12 +246,14 @@ Important: Return ONLY the JSON object, no additional text or markdown formattin
         language: transcriptionData.detected_language || "Unknown",
         duration: transcriptionData.duration || 60,
         processing_info: {
-          model_used: "Gemini 1.5 Flash",
-          quality: userPlan === "free" ? "Standard Quality" : "Premium Quality",
-          processing_speed: "Ultra Fast",
-          accuracy: userPlan === "free" ? "~90%" : "~97%",
-          confidence: transcriptionData.confidence || "high",
-          estimated_cost: `$${estimatedCost.toFixed(4)}`
+          quality: userPlan === "free" ? "Standard" : "Premium",
+          processing_speed: "Fast",
+          accuracy: userPlan === "free" ? "High" : "Very High",
+          confidence: transcriptionData.confidence || "high"
+        },
+        usage: {
+          minutesUsed: usageResult.minutesUsed,
+          minutesRemaining: usageResult.minutesRemaining
         }
       });
 
