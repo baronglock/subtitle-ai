@@ -45,15 +45,77 @@ function formatTime(seconds: number): string {
 
 // Function to create SRT from plain text (when no timestamps available)
 function createSRTFromText(text: string, duration: number = 60): string {
-  // Split into sentences
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-  const avgTimePerSentence = duration / sentences.length;
+  // Split text into words
+  const words = text.split(/\s+/);
+  const segments: Array<{text: string, start: number, end: number}> = [];
   
-  const segments = sentences.map((sentence, index) => ({
-    text: sentence.trim(),
-    start: index * avgTimePerSentence,
-    end: (index + 1) * avgTimePerSentence
-  }));
+  // Configuration for subtitle generation
+  const MAX_WORDS_PER_SUBTITLE = 8;
+  const MAX_CHARS_PER_SUBTITLE = 42; // Industry standard for readability
+  const WORDS_PER_MINUTE = 150; // Average speaking rate
+  const SECONDS_PER_WORD = 60 / WORDS_PER_MINUTE; // ~0.4 seconds per word
+  const MIN_SUBTITLE_DURATION = 1.5; // Minimum time for readability
+  const MAX_SUBTITLE_DURATION = 4.0; // Maximum time to avoid too long on screen
+  
+  let currentSegment = "";
+  let currentWordCount = 0;
+  let currentStartTime = 0;
+  
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const testSegment = currentSegment ? `${currentSegment} ${word}` : word;
+    
+    // Check if adding this word would exceed limits
+    if (currentWordCount >= MAX_WORDS_PER_SUBTITLE || 
+        testSegment.length > MAX_CHARS_PER_SUBTITLE ||
+        (word.match(/[.!?]$/) && currentWordCount >= 3)) { // Natural break at punctuation
+      
+      // Calculate duration based on word count
+      const segmentDuration = Math.max(
+        MIN_SUBTITLE_DURATION,
+        Math.min(MAX_SUBTITLE_DURATION, currentWordCount * SECONDS_PER_WORD)
+      );
+      
+      // Add the segment
+      segments.push({
+        text: currentSegment.trim(),
+        start: currentStartTime,
+        end: currentStartTime + segmentDuration
+      });
+      
+      // Reset for next segment
+      currentStartTime += segmentDuration;
+      currentSegment = word;
+      currentWordCount = 1;
+    } else {
+      currentSegment = testSegment;
+      currentWordCount++;
+    }
+  }
+  
+  // Add final segment
+  if (currentSegment) {
+    const segmentDuration = Math.max(
+      MIN_SUBTITLE_DURATION,
+      Math.min(MAX_SUBTITLE_DURATION, currentWordCount * SECONDS_PER_WORD)
+    );
+    
+    segments.push({
+      text: currentSegment.trim(),
+      start: currentStartTime,
+      end: Math.min(currentStartTime + segmentDuration, duration)
+    });
+  }
+  
+  // Adjust timing if total exceeds duration
+  const totalTime = segments[segments.length - 1]?.end || 0;
+  if (totalTime > duration && segments.length > 0) {
+    const ratio = duration / totalTime;
+    segments.forEach(segment => {
+      segment.start *= ratio;
+      segment.end *= ratio;
+    });
+  }
   
   return formatToSRT(segments);
 }
@@ -125,6 +187,10 @@ export async function POST(request: NextRequest) {
     // Convert audio to base64 for Gemini
     const base64Audio = Buffer.from(audioData).toString('base64');
     
+    // Try to estimate audio duration (rough estimate based on file size and common bitrates)
+    // This is a fallback - Gemini should provide the actual duration
+    const estimatedDuration = Math.round((audioData.length / 1024) / 16); // Very rough: ~16KB per second for compressed audio
+    
     // Check if Gemini API key is configured
     if (!process.env.GEMINI_API_KEY) {
       console.error("GEMINI_API_KEY is not configured in environment variables");
@@ -155,17 +221,30 @@ export async function POST(request: NextRequest) {
       ? `The audio is in ${sourceLanguage}. ` 
       : "";
 
-    // Enhanced prompt for better transcription
-    const prompt = `${languageHint}Please transcribe this audio file accurately.
-Return the transcription as a valid JSON object with this exact structure:
+    // Enhanced prompt for better transcription with timestamps
+    const prompt = `${languageHint}Please transcribe this audio file with precise timestamps.
+
+IMPORTANT: Analyze the audio and provide the transcription in segments with accurate timestamps.
+
+Return a JSON object with this EXACT structure:
 {
   "transcription": "the complete transcribed text here",
+  "segments": [
+    {"start": 0.0, "end": 2.5, "text": "first phrase or sentence"},
+    {"start": 2.5, "end": 5.0, "text": "second phrase or sentence"},
+    {"start": 5.0, "end": 8.3, "text": "third phrase or sentence"}
+  ],
   "detected_language": "the detected language (e.g., English, Spanish, Portuguese)",
-  "duration": 60,
+  "duration": total_audio_duration_in_seconds,
   "confidence": "high"
 }
 
-Important: Return ONLY the JSON object, no additional text or markdown formatting.`;
+Guidelines:
+- Each segment should be 3-8 words for optimal subtitle readability
+- Start and end times must be in seconds (float)
+- Segments should match natural speech pauses
+- No overlap between segments
+- Return ONLY valid JSON, no markdown or additional text`;
 
     try {
       // Create the audio part for Gemini
@@ -186,6 +265,8 @@ Important: Return ONLY the JSON object, no additional text or markdown formattin
 
       // Parse the response
       let transcriptionData;
+      let srtContent;
+      
       try {
         // Extract JSON from response (Gemini might wrap it in markdown)
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -212,10 +293,19 @@ Important: Return ONLY the JSON object, no additional text or markdown formattin
       }
 
       // Generate SRT format
-      const srtContent = createSRTFromText(
-        transcriptionData.transcription,
-        transcriptionData.duration || 60
-      );
+      if (transcriptionData.segments && Array.isArray(transcriptionData.segments) && transcriptionData.segments.length > 0) {
+        // Use real timestamps from Gemini if available
+        console.log("Using timestamp segments from Gemini");
+        srtContent = formatToSRT(transcriptionData.segments);
+      } else {
+        // Fallback to our improved text-based generation
+        console.log("Generating timestamps from text");
+        const duration = transcriptionData.duration || estimatedDuration || 60;
+        srtContent = createSRTFromText(
+          transcriptionData.transcription,
+          duration
+        );
+      }
 
       // Calculate approximate cost (32 tokens per second of audio)
       const estimatedTokens = (transcriptionData.duration || 60) * 32;
