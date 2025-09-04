@@ -4,6 +4,7 @@ import { authOptions } from "../../lib/auth";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Força uso do Cloudflare R2, nunca AWS S3
 const s3Client = new S3Client({
   region: "auto",
   endpoint: process.env.R2_ENDPOINT || `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -11,6 +12,7 @@ const s3Client = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
+  forcePathStyle: true, // Importante para R2
 });
 
 // Initialize Gemini AI
@@ -84,7 +86,10 @@ export async function POST(request: NextRequest) {
     // Usar fileKey se disponível (novo método), senão usar fileName (compatibilidade)
     const key = fileKey || `uploads/${session.user.email}/${fileName}`;
     
-    console.log("Attempting to download file from R2 with key:", key);
+    console.log("Attempting to download file from R2:");
+    console.log("- Endpoint:", process.env.R2_ENDPOINT || `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`);
+    console.log("- Bucket:", process.env.R2_BUCKET_NAME);
+    console.log("- Key:", key);
     
     const command = new GetObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,

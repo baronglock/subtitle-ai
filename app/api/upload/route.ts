@@ -9,11 +9,12 @@ import { authOptions } from "../../lib/auth";
 // Configura o cliente S3 para se conectar ao Cloudflare R2
 const s3Client = new S3Client({
   region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  endpoint: process.env.R2_ENDPOINT || `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
+  forcePathStyle: true, // Importante para R2
 });
 
 export async function POST(request: Request) {
