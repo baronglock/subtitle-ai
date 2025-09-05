@@ -7,7 +7,7 @@ export async function POST(request: Request) {
 
     // Create a transporter using your email service
     // For Gmail, you'll need an app-specific password
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_FROM, // Your business email (e.g., support@subtleai.com)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -53,7 +53,7 @@ const CheckoutForm = ({ plan }: { plan: string }) => {
       body: JSON.stringify({
         amount: getPlanPrice(plan),
         plan: plan,
-        userId: session?.user?.id,
+        userId: (session?.user as any)?.id,
       }),
     });
 
@@ -90,7 +90,7 @@ const CheckoutForm = ({ plan }: { plan: string }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: session?.user?.id,
+          userId: (session?.user as any)?.id,
           plan: plan,
           paymentIntentId: result.paymentIntent?.id,
         }),
@@ -236,7 +236,7 @@ const CheckoutForm = ({ plan }: { plan: string }) => {
   );
 };
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") || "pro";
   const { data: session, status } = useSession();
@@ -262,5 +262,13 @@ export default function CheckoutPage() {
         <CheckoutForm plan={plan} />
       </Elements>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
