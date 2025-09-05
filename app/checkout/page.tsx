@@ -37,6 +37,7 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
   const [processing, setProcessing] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "pix">("card");
+  const [paymentGateway, setPaymentGateway] = useState<"stripe" | "mercadopago">("mercadopago"); // Default to MercadoPago for better PIX support
 
   // Determine what's being purchased
   const isCredit = !!creditPackage;
@@ -58,6 +59,36 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    // For MercadoPago, use different flow
+    if (paymentGateway === "mercadopago" && location.currency === "BRL") {
+      setProcessing(true);
+      try {
+        const response = await fetch("/api/payment/mercadopago/create-preference", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: isCredit ? "credit" : "subscription",
+            itemId: isCredit ? creditPackage : plan,
+            currency: location.currency,
+          }),
+        });
+
+        const { initPoint } = await response.json();
+        
+        // Redirect to MercadoPago checkout
+        window.location.href = initPoint;
+        return;
+      } catch (error) {
+        console.error("MercadoPago error:", error);
+        setError("Error processing payment. Please try again.");
+        setProcessing(false);
+        return;
+      }
+    }
+
+    // Original Stripe flow
     if (!stripe || !elements) {
       return;
     }
@@ -294,13 +325,65 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
-              {/* Payment Method Selection for Brazil */}
+              {/* Payment Gateway Selection for Brazil */}
               {location.currency === "BRL" && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium mb-3">
-                    {language === "pt-BR" ? "Método de Pagamento" : "Payment Method"}
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
+                <>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium mb-3">
+                      {language === "pt-BR" ? "Escolha a plataforma de pagamento" : "Choose payment platform"}
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentGateway("mercadopago")}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          paymentGateway === "mercadopago"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                      >
+                        <img 
+                          src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.92/mercadopago/logo__large.png" 
+                          alt="MercadoPago" 
+                          className="h-8 mx-auto mb-2 object-contain"
+                        />
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          PIX {language === "pt-BR" ? "instantâneo" : "instant"}
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentGateway("stripe")}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          paymentGateway === "stripe"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center h-8 mb-2">
+                          <span className="text-2xl font-bold text-indigo-600">stripe</span>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {language === "pt-BR" ? "Cartão/PIX" : "Card/PIX"}
+                        </p>
+                      </button>
+                    </div>
+                    {paymentGateway === "mercadopago" && (
+                      <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                        ✓ {language === "pt-BR" 
+                          ? "PIX aprovado instantaneamente! Sem espera para ativação." 
+                          : "PIX approved instantly! No waiting for activation."}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Payment Method Selection - Only show for Stripe */}
+                  {paymentGateway === "stripe" && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-3">
+                        {language === "pt-BR" ? "Método de Pagamento" : "Payment Method"}
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("card")}
@@ -332,10 +415,12 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
                     </button>
                   </div>
                 </div>
+                  )}
+                </>
               )}
 
-              {/* Card Input */}
-              {paymentMethod === "card" && (
+              {/* Card Input - Only for Stripe with card method */}
+              {paymentGateway === "stripe" && paymentMethod === "card" && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium mb-2">
                     {language === "pt-BR" ? "Informações do Cartão" : "Card Information"}
@@ -366,8 +451,8 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
                 </div>
               )}
 
-              {/* PIX Info */}
-              {paymentMethod === "pix" && location.currency === "BRL" && (
+              {/* PIX Info - For Stripe */}
+              {paymentGateway === "stripe" && paymentMethod === "pix" && location.currency === "BRL" && (
                 <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <div className="flex items-start gap-3">
                     <Clock className="w-5 h-5 text-blue-500 mt-0.5" />
@@ -393,11 +478,13 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
 
               <button
                 type="submit"
-                disabled={!stripe || processing}
+                disabled={(paymentGateway === "stripe" && !stripe) || processing}
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {processing 
                   ? (language === "pt-BR" ? "Processando..." : "Processing...")
+                  : paymentGateway === "mercadopago"
+                  ? (language === "pt-BR" ? "Ir para MercadoPago" : "Go to MercadoPago")
                   : paymentMethod === "pix" && location.currency === "BRL"
                   ? (language === "pt-BR" ? "Gerar PIX" : "Generate PIX")
                   : (language === "pt-BR" ? "Pagar Agora" : "Pay Now")}
@@ -406,9 +493,13 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
               <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Shield className="w-4 h-4" />
                 <span>
-                  {language === "pt-BR" 
-                    ? "Pagamento seguro via Stripe"
-                    : "Secure payment powered by Stripe"}
+                  {paymentGateway === "mercadopago"
+                    ? (language === "pt-BR" 
+                      ? "Pagamento seguro via MercadoPago"
+                      : "Secure payment powered by MercadoPago")
+                    : (language === "pt-BR" 
+                      ? "Pagamento seguro via Stripe"
+                      : "Secure payment powered by Stripe")}
                 </span>
               </div>
             </form>
