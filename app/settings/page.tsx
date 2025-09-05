@@ -1,14 +1,18 @@
 "use client";
 
-import { User, CreditCard, Bell, Shield, Globe, Moon } from "lucide-react";
+import { User, CreditCard, Bell, Shield, Globe, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useTheme } from "../contexts/ThemeContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState("account");
 
   useEffect(() => {
@@ -97,9 +101,12 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <div>
                     <p className="font-semibold">Free Plan</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">30 minutes per month</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">120 minutes per month (2 hours)</p>
                   </div>
-                  <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                  <button 
+                    onClick={() => router.push('/pricing')}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
                     Upgrade
                   </button>
                 </div>
@@ -120,7 +127,10 @@ export default function SettingsPage() {
               <div>
                 <h3 className="font-semibold mb-3">Payment Methods</h3>
                 <p className="text-gray-600 dark:text-gray-400">No payment methods on file</p>
-                <button className="mt-3 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                <button 
+                  onClick={() => router.push('/checkout?plan=pro')}
+                  className="mt-3 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
                   Add Payment Method
                 </button>
               </div>
@@ -218,14 +228,31 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm font-medium mb-2">Theme</label>
                 <div className="flex gap-4">
-                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <button 
+                    onClick={() => {
+                      if (theme === 'dark') toggleTheme();
+                    }}
+                    className={`px-4 py-2 border rounded-lg transition-all flex items-center gap-2 ${
+                      theme === 'light' 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
+                        : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Sun className="w-4 h-4" />
                     Light
                   </button>
-                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <button 
+                    onClick={() => {
+                      if (theme === 'light') toggleTheme();
+                    }}
+                    className={`px-4 py-2 border rounded-lg transition-all flex items-center gap-2 ${
+                      theme === 'dark' 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
+                        : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Moon className="w-4 h-4" />
                     Dark
-                  </button>
-                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
-                    System
                   </button>
                 </div>
               </div>

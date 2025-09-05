@@ -38,7 +38,7 @@ export default function PrivacyPage() {
                 <p>Usamos cookies para melhorar sua experiência no site.</p>
                 
                 <h2>8. Contato</h2>
-                <p>Para questões sobre privacidade, entre em contato: support@subtitleai.com</p>
+                <p>Para questões sobre privacidade, entre em contato: support@subtleai.com</p>
               </>
             ) : (
               <>
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
                 <p>We use cookies to improve your site experience.</p>
                 
                 <h2>8. Contact</h2>
-                <p>For privacy questions, contact: support@subtitleai.com</p>
+                <p>For privacy questions, contact: support@subtleai.com</p>
               </>
             )}
           </div>

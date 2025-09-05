@@ -40,13 +40,13 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "free",
     name: "Free Trial",
-    description: "Test our service with 30 minutes free",
-    minutes: 30,
+    description: "Test our service with 120 minutes free",
+    minutes: 120,
     priceMonthly: { brl: 0, usd: 0 },
     priceYearly: { brl: 0, usd: 0 },
     pricePerHour: { brl: 0, usd: 0 },
     features: [
-      "30 minutes per month",
+      "120 minutes per month (2 hours)",
       "Standard translation quality",
       "~90% accuracy",
       "Standard processing speed",

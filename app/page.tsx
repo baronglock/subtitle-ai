@@ -185,7 +185,7 @@ export default function HomePage() {
             <ArrowRight className="ml-2 w-5 h-5" />
           </Link>
           <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            No credit card required • 30 minutes free
+            No credit card required • 2 hours free (120 minutes)
           </p>
         </div>
       </section>

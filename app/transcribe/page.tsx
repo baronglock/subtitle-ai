@@ -749,6 +749,36 @@ export default function TranscribePage() {
                           <Download className="w-4 h-4" />
                           Download TXT
                         </button>
+                        
+                        {/* Human Revision Button */}
+                        <button
+                          onClick={() => {
+                            const contentMinutes = Math.ceil(duration / 60);
+                            const pricePerMinute = 2.50; // R$2.50 for Brazil
+                            const totalPrice = contentMinutes * pricePerMinute;
+                            
+                            if (confirm(`Solicitar revisão humana para ${contentMinutes} minutos de conteúdo?\n\nValor: R$ ${totalPrice.toFixed(2)}\nPrazo: 24 horas\nPrecisão: 99.9%`)) {
+                              fetch('/api/revision/request', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  transcriptionId: Date.now().toString(),
+                                  contentMinutes,
+                                  language: detectedLanguage || 'Portuguese',
+                                  transcriptionText: transcription,
+                                })
+                              }).then(res => res.json()).then(data => {
+                                if (data.success) {
+                                  alert('Revisão solicitada! Você receberá por email em até 24 horas.');
+                                }
+                              });
+                            }
+                          }}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-medium transition-all"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          Revisão Humana (99.9%)
+                        </button>
                       </div>
                     </div>
                   )}

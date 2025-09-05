@@ -17,7 +17,7 @@ export default function TermsPage() {
             {locale === "pt-BR" ? (
               <>
                 <h2>1. Aceitação dos Termos</h2>
-                <p>Ao usar o SubtitleAI, você concorda com estes termos de serviço.</p>
+                <p>Ao usar o SubtleAI, você concorda com estes termos de serviço.</p>
                 
                 <h2>2. Uso do Serviço</h2>
                 <p>Nosso serviço permite transcrever e traduzir áudio e vídeo usando IA.</p>
@@ -32,7 +32,7 @@ export default function TermsPage() {
                 <p>Seus arquivos são processados com segurança e excluídos após o processamento.</p>
                 
                 <h2>6. Limitação de Responsabilidade</h2>
-                <p>O SubtitleAI não se responsabiliza por erros na transcrição ou tradução.</p>
+                <p>O SubtleAI não se responsabiliza por erros na transcrição ou tradução.</p>
                 
                 <h2>7. Modificações</h2>
                 <p>Podemos atualizar estes termos periodicamente.</p>
@@ -40,7 +40,7 @@ export default function TermsPage() {
             ) : (
               <>
                 <h2>1. Acceptance of Terms</h2>
-                <p>By using SubtitleAI, you agree to these terms of service.</p>
+                <p>By using SubtleAI, you agree to these terms of service.</p>
                 
                 <h2>2. Use of Service</h2>
                 <p>Our service allows you to transcribe and translate audio and video using AI.</p>
@@ -55,7 +55,7 @@ export default function TermsPage() {
                 <p>Your files are securely processed and deleted after processing.</p>
                 
                 <h2>6. Limitation of Liability</h2>
-                <p>SubtitleAI is not responsible for errors in transcription or translation.</p>
+                <p>SubtleAI is not responsible for errors in transcription or translation.</p>
                 
                 <h2>7. Modifications</h2>
                 <p>We may update these terms periodically.</p>
