@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       currency === "BRL" && paymentMethod === "pix" 
         ? ["pix"]
         : currency === "BRL"
-        ? ["card", "boleto"]
+        ? ["card", "pix", "boleto"]  // Include PIX for Brazilian users
         : ["card"];
 
     // Create Stripe Checkout Session

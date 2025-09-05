@@ -15,12 +15,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { amount, plan, userId } = await request.json();
+    const { amount, plan, userId, currency = "usd" } = await request.json();
+
+    // Detect if Brazilian user
+    const isBrazil = request.headers.get("cf-ipcountry") === "BR" || currency === "brl";
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
-      currency: "usd",
+      currency: isBrazil ? "brl" : "usd",
+      payment_method_types: isBrazil ? ["card", "pix", "boleto"] : ["card"],
       metadata: {
         plan,
         userId,
