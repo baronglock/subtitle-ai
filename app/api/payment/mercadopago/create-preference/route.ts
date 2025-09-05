@@ -83,6 +83,7 @@ export async function POST(request: Request) {
         userId: (session.user as any).id,
         type: type,
         itemId: itemId,
+        user_email: session.user.email, // For webhook notifications
       }
     };
 
