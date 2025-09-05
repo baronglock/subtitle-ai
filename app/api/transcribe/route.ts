@@ -19,6 +19,9 @@ const s3Client = new S3Client({
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+// Import plan configurations
+import { GEMINI_MODELS, PROCESSING_SPEEDS } from "@/lib/pricing-config";
+
 function formatToSRT(segments: Array<{text: string, start: number, end: number}>): string {
   let srtContent = "";
   
@@ -201,13 +204,17 @@ export async function POST(request: NextRequest) {
     console.log("API key length:", process.env.GEMINI_API_KEY?.length);
     console.log("API key starts with:", process.env.GEMINI_API_KEY?.substring(0, 10) + "...");
 
-    // Use Gemini 1.5 Flash for best cost efficiency
+    // Get model config and speed based on user plan
+    const modelConfig = GEMINI_MODELS[userPlan as keyof typeof GEMINI_MODELS] || GEMINI_MODELS.free;
+    const processingSpeed = PROCESSING_SPEEDS[userPlan as keyof typeof PROCESSING_SPEEDS] || PROCESSING_SPEEDS.free;
+    
+    // Use different Gemini models based on plan
     let model;
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash", // Updated to correct model name
+        model: modelConfig.model,
       });
-      console.log("Gemini model initialized successfully");
+      console.log(`Gemini model initialized: ${modelConfig.model} for ${userPlan} plan`);
     } catch (modelError: any) {
       console.error("Failed to initialize Gemini model:", modelError);
       return NextResponse.json({ 
@@ -255,9 +262,20 @@ Guidelines:
         },
       };
 
-      console.log("Sending to Gemini API with model: gemini-1.5-flash");
+      console.log(`Sending to Gemini API with model: ${modelConfig.model}`);
+      
+      // Calculate processing time based on plan (simulated delay for demo)
+      // In production, different models would naturally have different speeds
+      const audioDurationMinutes = estimatedDuration / 60;
+      const simulatedProcessingTime = processingSpeed * audioDurationMinutes * 1000; // Convert to milliseconds
+      
+      // Add artificial delay for demo purposes (remove in production)
+      if (userPlan === "free") {
+        // Free plan gets slower processing
+        await new Promise(resolve => setTimeout(resolve, Math.min(simulatedProcessingTime, 10000)));
+      }
 
-      // Generate transcription
+      // Generate transcription with configuration based on plan
       const result = await model.generateContent([prompt, audioPart]);
       const responseText = result.response.text();
       
