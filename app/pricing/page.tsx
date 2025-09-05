@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useUserLocation, formatPrice } from "../hooks/useUserLocation";
 import { PRICING_PLANS, CREDIT_PACKAGES } from "@/lib/pricing-config";
+import { translatePricingText } from "@/lib/pricing-translations";
 
 export default function PricingPage() {
   const { data: session } = useSession();
@@ -109,9 +110,9 @@ export default function PricingPage() {
               )}
 
               <div className="p-6">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <h3 className="text-2xl font-bold mb-2">{translatePricingText(plan.name, language)}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  {plan.description}
+                  {translatePricingText(plan.description, language)}
                 </p>
 
                 {/* Price */}
@@ -149,10 +150,10 @@ export default function PricingPage() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {plan.technology}
+                    {translatePricingText(plan.technology, language)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
-                    {plan.accuracy}
+                    {translatePricingText(plan.accuracy, language)}
                   </p>
                 </div>
 
@@ -170,7 +171,7 @@ export default function PricingPage() {
                           feature.included ? "" : "text-gray-500 dark:text-gray-600"
                         }
                       >
-                        {feature.text}
+                        {translatePricingText(feature.text, language)}
                       </span>
                     </li>
                   ))}
@@ -192,10 +193,10 @@ export default function PricingPage() {
                   {plan.isEnterprise ? (
                     <span className="flex items-center justify-center gap-2">
                       <Building2 className="w-5 h-5" />
-                      {plan.buttonText}
+                      {translatePricingText(plan.buttonText, language)}
                     </span>
                   ) : (
-                    plan.buttonText
+                    translatePricingText(plan.buttonText, language)
                   )}
                 </button>
               </div>
