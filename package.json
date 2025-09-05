@@ -29,7 +29,9 @@
     "next-auth": "^4.24.11",
     "next-intl": "^4.3.4",
     "nodemailer": "^6.10.1",
+    "pix-utils": "^2.8.2",
     "prisma": "^6.14.0",
+    "qrcode": "^1.5.4",
     "rate-limiter-flexible": "^7.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -39,6 +41,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.11",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.34.0",

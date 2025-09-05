@@ -37,7 +37,7 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
   const [processing, setProcessing] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "pix">("card");
-  const [paymentGateway, setPaymentGateway] = useState<"stripe" | "mercadopago">("mercadopago"); // Default to MercadoPago for better PIX support
+  const [paymentGateway, setPaymentGateway] = useState<"stripe" | "mercadopago" | "pix_direct">("pix_direct"); // Default to direct PIX for simplicity
 
   // Determine what's being purchased
   const isCredit = !!creditPackage;
@@ -58,6 +58,46 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    // For Direct PIX, use simplest flow
+    if (paymentGateway === "pix_direct" && location.currency === "BRL") {
+      setProcessing(true);
+      try {
+        const response = await fetch("/api/payment/pix-simple", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: isCredit ? "credit" : "subscription",
+            itemId: isCredit ? creditPackage : plan,
+            currency: location.currency,
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          // Store PIX data for display
+          (window as any).pixPaymentData = {
+            pixCode: data.pixCode,
+            qrCode: data.qrCode,
+            amount: data.amount,
+            orderId: data.orderId,
+            description: data.description,
+          };
+          setSucceeded(true);
+          setProcessing(false);
+        } else {
+          throw new Error(data.error || "Failed to generate PIX");
+        }
+      } catch (error) {
+        console.error("PIX error:", error);
+        setError("Error generating PIX. Please try again.");
+        setProcessing(false);
+      }
+      return;
+    }
 
     // For MercadoPago, use different flow
     if (paymentGateway === "mercadopago" && location.currency === "BRL") {
@@ -285,7 +325,7 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
 
           {succeeded ? (
             <div className="text-center py-8">
-              {paymentMethod === "pix" && (window as any).pixPaymentData ? (
+              {(paymentMethod === "pix" || paymentGateway === "pix_direct") && (window as any).pixPaymentData ? (
                 <div>
                   <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Smartphone className="w-8 h-8 text-green-500" />
@@ -293,19 +333,46 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
                   <h3 className="text-xl font-semibold mb-4">
                     {language === "pt-BR" ? "PIX Gerado!" : "PIX Generated!"}
                   </h3>
+                  
+                  {/* QR Code Display */}
+                  {(window as any).pixPaymentData.qrCode && (
+                    <div className="mb-6">
+                      <img 
+                        src={(window as any).pixPaymentData.qrCode} 
+                        alt="QR Code PIX" 
+                        className="mx-auto rounded-lg shadow-lg"
+                        style={{ maxWidth: "300px" }}
+                      />
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        {language === "pt-BR" 
+                          ? "Escaneie com o app do seu banco"
+                          : "Scan with your banking app"}
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      {language === "pt-BR" ? "Código PIX:" : "PIX Code:"}
+                      {language === "pt-BR" ? "PIX Copia e Cola:" : "PIX Copy & Paste:"}
                     </p>
-                    <p className="font-mono text-xs break-all">
+                    <p className="font-mono text-xs break-all select-all cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 p-2 rounded">
                       {(window as any).pixPaymentData.pixCode}
                     </p>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {language === "pt-BR" 
-                      ? "Copie o código ou escaneie o QR code no seu app bancário"
-                      : "Copy the code or scan the QR in your banking app"}
-                  </p>
+                  
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg mb-4">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      <strong>{language === "pt-BR" ? "IMPORTANTE:" : "IMPORTANT:"}</strong> {language === "pt-BR" 
+                        ? "Após fazer o PIX, aguarde até 5 minutos para a confirmação automática."
+                        : "After making the PIX payment, wait up to 5 minutes for automatic confirmation."}
+                    </p>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <p><strong>{language === "pt-BR" ? "Valor:" : "Amount:"}</strong> R$ {(window as any).pixPaymentData.amount?.toFixed(2)}</p>
+                    <p><strong>{language === "pt-BR" ? "Produto:" : "Product:"}</strong> {(window as any).pixPaymentData.description}</p>
+                    <p className="mt-2 text-xs">ID: {(window as any).pixPaymentData.orderId}</p>
+                  </div>
                 </div>
               ) : (
                 <div>
@@ -330,9 +397,29 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
                 <>
                   <div className="mb-6">
                     <label className="block text-sm font-medium mb-3">
-                      {language === "pt-BR" ? "Escolha a plataforma de pagamento" : "Choose payment platform"}
+                      {language === "pt-BR" ? "Escolha como pagar" : "Choose payment method"}
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentGateway("pix_direct")}
+                        className={`p-4 rounded-lg border-2 transition-all relative ${
+                          paymentGateway === "pix_direct"
+                            ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                      >
+                        <div className="absolute top-2 right-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                          {language === "pt-BR" ? "Recomendado" : "Recommended"}
+                        </div>
+                        <div className="flex items-center justify-center h-8 mb-2">
+                          <span className="text-3xl">🏦</span>
+                        </div>
+                        <p className="text-sm font-semibold">PIX Direto</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {language === "pt-BR" ? "Simples e rápido" : "Simple & fast"}
+                        </p>
+                      </button>
                       <button
                         type="button"
                         onClick={() => setPaymentGateway("mercadopago")}
@@ -348,7 +435,7 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
                           className="h-8 mx-auto mb-2 object-contain"
                         />
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          PIX {language === "pt-BR" ? "instantâneo" : "instant"}
+                          {language === "pt-BR" ? "Várias opções" : "Many options"}
                         </p>
                       </button>
                       <button
@@ -364,15 +451,29 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
                           <span className="text-2xl font-bold text-indigo-600">stripe</span>
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          {language === "pt-BR" ? "Cartão/PIX" : "Card/PIX"}
+                          {language === "pt-BR" ? "Cartão" : "Card"}
                         </p>
                       </button>
                     </div>
+                    {paymentGateway === "pix_direct" && (
+                      <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          ✓ {language === "pt-BR" 
+                            ? "PIX direto para nossa conta! Você paga, nós confirmamos rapidinho." 
+                            : "Direct PIX to our account! You pay, we confirm quickly."}
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                          {language === "pt-BR" 
+                            ? "Chave PIX aparecerá como: SubtleAI" 
+                            : "PIX key will appear as: SubtleAI"}
+                        </p>
+                      </div>
+                    )}
                     {paymentGateway === "mercadopago" && (
-                      <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                        ✓ {language === "pt-BR" 
-                          ? "PIX aprovado instantaneamente! Sem espera para ativação." 
-                          : "PIX approved instantly! No waiting for activation."}
+                      <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+                        {language === "pt-BR" 
+                          ? "Aceita PIX, cartão, boleto e parcelamento" 
+                          : "Accepts PIX, card, boleto and installments"}
                       </p>
                     )}
                   </div>
@@ -483,6 +584,8 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
               >
                 {processing 
                   ? (language === "pt-BR" ? "Processando..." : "Processing...")
+                  : paymentGateway === "pix_direct"
+                  ? (language === "pt-BR" ? "Gerar QR Code PIX" : "Generate PIX QR Code")
                   : paymentGateway === "mercadopago"
                   ? (language === "pt-BR" ? "Ir para MercadoPago" : "Go to MercadoPago")
                   : paymentMethod === "pix" && location.currency === "BRL"
@@ -493,7 +596,11 @@ const CheckoutForm = ({ plan, creditPackage }: { plan?: string; creditPackage?: 
               <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Shield className="w-4 h-4" />
                 <span>
-                  {paymentGateway === "mercadopago"
+                  {paymentGateway === "pix_direct"
+                    ? (language === "pt-BR" 
+                      ? "PIX seguro e verificado manualmente"
+                      : "Secure PIX with manual verification")
+                    : paymentGateway === "mercadopago"
                     ? (language === "pt-BR" 
                       ? "Pagamento seguro via MercadoPago"
                       : "Secure payment powered by MercadoPago")
